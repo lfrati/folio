@@ -5,7 +5,7 @@ Use this guide when creating or editing a document with Folio. The [demo](../exa
 ## Start a document
 
 ```sh
-npx --yes --package=github:lfrati/folio#v0.3.0 folio init my-paper
+npx --yes --ignore-scripts --min-release-age=14 --package=github:lfrati/folio#v0.3.1 folio init my-paper
 cd my-paper
 npm install
 npm run build
@@ -14,6 +14,8 @@ npm run build
 `folio init` with no directory initializes the current directory. It creates `paper.md`, `paper.config.mjs`, `package.json`, `AGENTS.md`, `.gitignore`, and `.npmrc`; if any target file already exists, it stops before writing.
 
 The starter uses Folio's built-in theme and needs no stylesheet, plugin directory, or build wrapper. Add those only when the document needs them.
+
+Commit the `package-lock.json` created by the first `npm install`, then use `npm ci` on other machines. Keep install scripts disabled and dependencies pinned; see the [dependency review](dependencies.md) before changing them.
 
 ## Mark AI-written text
 

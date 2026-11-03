@@ -18,7 +18,7 @@ export function initProject(target = '.') {
     'paper.config.mjs': "export default {\n  src: 'paper.md',\n  out: 'paper.html',\n};\n",
     'paper.md': '---\ntitle: Hello, world\n---\n\n# Hello\n\n::: ai\nHello, world! Start writing here.\n::: endai\n',
     '.gitignore': 'node_modules/\n/paper.html\n',
-    '.npmrc': 'min-release-age=14\nignore-scripts=true\n',
+    '.npmrc': 'min-release-age=14\nignore-scripts=true\nsave-exact=true\n',
     'AGENTS.md': `# Writing this document
 
 - Read the [Folio agent guide](https://github.com/lfrati/folio/blob/v${packageInfo.version}/docs/agents.md) for syntax and workflow.
@@ -26,6 +26,7 @@ export function initProject(target = '.') {
 - Wrap new AI-written prose and substantive rewrites in \`::: ai\` … \`::: endai\`.
 - Preserve AI markers until the human explicitly accepts that text; a successful build is not acceptance.
 - Keep edits small and preserve human text outside the requested change.
+- Commit the lockfile after the first install; use \`npm ci\` for repeat installs and keep dependency versions pinned.
 - Run \`npm run build\` after edits and resolve build warnings. Use \`npm run watch\` while writing.
 `,
   };

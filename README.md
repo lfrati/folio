@@ -19,10 +19,12 @@ The [showcase](examples/showcase/paper.md) shows Markdown source beside its rend
 Start a minimal document with:
 
 ```sh
-npx --yes --package=github:lfrati/folio#v0.3.0 folio init my-paper
+npx --yes --ignore-scripts --min-release-age=14 --package=github:lfrati/folio#v0.3.1 folio init my-paper
 cd my-paper
 npm install
 npm run build
 ```
 
 Agents should start with the [authoring guide](docs/agents.md), then use the [syntax](docs/markdown.md), [configuration/API](docs/getting-started.md), and [plugin](docs/plugins.md) references.
+
+Only two direct dependencies: `marked` for Markdown and `katex` for math; the CLI, watcher, and tests use Node built-ins. The [dependency review](docs/dependencies.md) records the exact pins, KaTeX’s one transitive dependency, and upgrade checks.

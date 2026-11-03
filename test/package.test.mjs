@@ -150,14 +150,24 @@ test('the packed package installs and builds in a separate project', t => {
   const dir = temporary(t);
   const packed = JSON.parse(command('npm', ['pack', '--json', '--ignore-scripts', '--pack-destination', dir], root))[0];
   const files = new Set(packed.files.map(file => file.path));
-  for (const file of ['src/index.mjs', 'assets/theme.css', 'assets/navigation.js', 'assets/navigation.css', 'bin/folio.mjs', 'src/init.mjs', 'docs/agents.md', 'examples/showcase/images/triangle.svg']) {
+  for (const file of ['src/index.mjs', 'assets/theme.css', 'assets/navigation.js', 'assets/navigation.css', 'bin/folio.mjs', 'src/init.mjs', 'docs/agents.md', 'docs/dependencies.md', 'npm-shrinkwrap.json', 'examples/showcase/images/triangle.svg']) {
     assert.ok(files.has(file), `package is missing ${file}`);
   }
   assert.ok(!files.has('original-paper.html'));
+  assert.ok(!files.has('package-lock.json'));
   assert.ok(![...files].some(file => file.endsWith('.html')), 'built examples should not be packaged');
   fs.writeFileSync(path.join(dir, 'package.json'), '{"private":true,"type":"module"}');
   fs.copyFileSync(path.join(root, '.npmrc'), path.join(dir, '.npmrc'));
   command('npm', ['install', '--prefer-offline', '--ignore-scripts', '--no-audit', '--no-fund', path.join(dir, packed.filename)], dir);
+  const reviewedLock = JSON.parse(fs.readFileSync(path.join(root, 'npm-shrinkwrap.json'), 'utf8'));
+  const installedRoot = path.join(dir, 'node_modules/@lfrati/folio');
+  assert.deepEqual(JSON.parse(fs.readFileSync(path.join(installedRoot, 'npm-shrinkwrap.json'), 'utf8')), reviewedLock);
+  const consumerLock = JSON.parse(fs.readFileSync(path.join(dir, 'package-lock.json'), 'utf8'));
+  const pins = lock => Object.entries(lock.packages)
+    .filter(([location]) => location && !location.endsWith('node_modules/@lfrati/folio'))
+    .map(([location, info]) => ({ name: location.split('node_modules/').at(-1), version: info.version, integrity: info.integrity }))
+    .sort((a, b) => a.name.localeCompare(b.name));
+  assert.deepEqual(pins(consumerLock), pins(reviewedLock), 'consumer must install only the reviewed versions and tarballs');
   const configFile = document(dir);
   command(path.join(dir, 'node_modules/.bin/folio'), [configFile], os.tmpdir());
   command(process.execPath, ['--input-type=module', '-e', "import { loadConfig, render } from '@lfrati/folio'; const result = await render(await loadConfig('./paper.config.mjs')); if (result.warnings.length) throw Error(result.warnings.join('\\n'));"], dir);

@@ -1,6 +1,6 @@
 {
   "name": "@lfrati/folio",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "private": true,
   "type": "module",
   "description": "Markdown papers with math, references, plugins, and interactive figures in one portable HTML file.",
@@ -22,7 +22,8 @@
     "assets/",
     "bin/",
     "docs/",
-    "examples/"
+    "examples/",
+    "npm-shrinkwrap.json"
   ],
   "engines": {
     "node": ">=20"

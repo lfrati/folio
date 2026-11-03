@@ -5,7 +5,7 @@ Agents should start with the [authoring guide](agents.md). Use Node.js 20 or new
 ## Initialize a project
 
 ```sh
-npx --yes --package=github:lfrati/folio#v0.3.0 folio init my-paper
+npx --yes --ignore-scripts --min-release-age=14 --package=github:lfrati/folio#v0.3.1 folio init my-paper
 cd my-paper
 npm install
 npm run build
@@ -14,6 +14,8 @@ npm run build
 This creates a minimal config, a Hello, world document, build/watch scripts, and agent instructions. Open `paper.html`, edit `paper.md`, and use `npm run watch` for automatic rebuilds.
 
 If Folio is already available as a command, use `folio init my-paper` directly. The directory defaults to the current directory; existing target files are preserved.
+
+The bootstrap command disables dependency install scripts and requires releases to be at least 14 days old; Folio ships reviewed, exact dependency pins. New projects record the same settings in `.npmrc`; commit the generated `package-lock.json` and use `npm ci` for subsequent installs. See [Dependencies](dependencies.md) for the versions and review.
 
 ## Configuration
 
