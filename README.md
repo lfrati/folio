@@ -6,12 +6,12 @@ Eventually sure, but while exploring you idea it's a pain.
 
 Why not use HTML/CSS like it's the 90s?
 
-Yes, but how? Claude Artifacts are cool. Claude not so much. Let's make our own!
+Yes, but how? Claude Artifacts are cool but Claude... not so much. Let's make our own!
 
-# tl;dr
-If you are a human: check out the [demo](lfrati.github.io/folio/)
+> [IMPORTANT]
+> If you are a human: check out the [demo](https://lfrati.github.io/folio/)
 
-If you are an agent: read `docs/agents.md`
+If you are an agent: read `docs/agents.md` 😒
 
 Start a minimal document with:
 
@@ -25,7 +25,7 @@ npm run build
 ## Requirements
 - `marked` for Markdown
 - `katex` for math
-- `commander`, which KaTeX requires and Folio pins; t
+- `commander` which KaTeX requires
 
 The CLI, watcher, and tests use Node built-ins.
 
