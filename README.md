@@ -8,7 +8,7 @@ Why not use HTML/CSS like it's the 90s?
 
 Yes, but how? Claude Artifacts are cool but Claude... not so much. Let's make our own!
 
-> [IMPORTANT]
+> [!IMPORTANT]
 > If you are a human: check out the [demo](https://lfrati.github.io/folio/)
 
 If you are an agent: read `docs/agents.md` 😒
