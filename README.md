@@ -14,7 +14,7 @@ Folio turns Markdown into a single HTML document with math, references, and inte
 - **Plugins:** Custom inline markup, fenced code blocks, and document blocks, with optional JavaScript and CSS.
 - **Build feedback:** Watch mode rebuilds on edits, and warnings identify broken references, malformed blocks, invalid math, and failing plugins.
 
-The [showcase](examples/showcase/paper.md) shows Markdown source beside its rendered result for each feature. Run `npm ci && npm run build:demo` to generate `examples/showcase/index.html`, a single file ready to open or host.
+The [live demo](https://lfrati.github.io/folio/) shows Markdown source beside its rendered result for each feature. Its source is [`examples/showcase/paper.md`](examples/showcase/paper.md); run `npm ci && npm run build:demo` to generate the same page locally.
 
 Start a minimal document with:
 
