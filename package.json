@@ -4,7 +4,7 @@
   "private": true,
   "type": "module",
   "description": "Markdown papers with math, references, plugins, and interactive figures in one portable HTML file.",
-  "license": "UNLICENSED",
+  "license": "MIT",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/lfrati/folio.git"
@@ -22,18 +22,18 @@
     "assets/",
     "bin/",
     "docs/",
-    "examples/",
-    "npm-shrinkwrap.json"
+    "examples/"
   ],
   "engines": {
     "node": ">=20"
   },
   "scripts": {
-    "test": "node test/test.mjs && node --test test/package.test.mjs",
+    "test": "node test/test.mjs && node --test test/package.test.mjs test/robustness.test.mjs",
     "build:example": "node bin/folio.mjs examples/basic/paper.config.mjs",
     "build:demo": "node bin/folio.mjs examples/showcase/paper.config.mjs"
   },
   "dependencies": {
+    "commander": "8.3.0",
     "katex": "0.18.4",
     "marked": "18.0.10"
   }

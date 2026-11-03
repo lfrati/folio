@@ -5,7 +5,7 @@ Agents should start with the [authoring guide](agents.md). Use Node.js 20 or new
 ## Initialize a project
 
 ```sh
-npx --yes --ignore-scripts --min-release-age=14 --package=github:lfrati/folio#v0.3.1 folio init my-paper
+npx --yes --ignore-scripts --min-release-age=14 --allow-git=all --package=github:lfrati/folio#v0.3.1 folio init my-paper
 cd my-paper
 npm install
 npm run build
@@ -15,7 +15,7 @@ This creates a minimal config, a Hello, world document, build/watch scripts, and
 
 If Folio is already available as a command, use `folio init my-paper` directly. The directory defaults to the current directory; existing target files are preserved.
 
-The bootstrap command disables dependency install scripts and requires releases to be at least 14 days old; Folio ships reviewed, exact dependency pins. New projects record the same settings in `.npmrc`; commit the generated `package-lock.json` and use `npm ci` for subsequent installs. See [Dependencies](dependencies.md) for the versions and review.
+The bootstrap command disables dependency install scripts, requires releases to be at least 14 days old, and allows the Git dependency on Folio, which npm 12 otherwise refuses. New projects record the same settings in `.npmrc`. Commit the generated `package-lock.json`, which is what freezes a project's dependencies, and use `npm ci` for subsequent installs. See [Dependencies](dependencies.md) for the versions and review.
 
 ## Configuration
 
@@ -30,9 +30,12 @@ Paths resolve relative to the config file, so the build works from another direc
 | `navigation` | `true` | Include TOC highlighting and reference preview scripts/styles |
 | `bib` | `refs.bib` | Bibliography; missing files are allowed |
 | `plugins` | `plugins` | Folder of plugin `.mjs` files; missing folders are allowed |
-| `kinds` | `{}` | Named statement types and their display styles |
+| `kinds` | `{}` | Statement types beyond the [built-in ones](markdown.md#statements-and-proofs), or new names and styles for them |
+| `macros` | `{}` | KaTeX macros shared by all math, such as `{ '\\R': '\\mathbb{R}' }` |
 
 Additional options are available to plugins through `ctx.config`. CLI flags such as `--snippets` or `--mode=draft` reach plugins as `ctx.flags`.
+
+Other than `--watch`, flags are not checked, because they belong to your plugins. A near miss of `--watch` prints a reminder.
 
 ## JavaScript API
 
@@ -46,9 +49,11 @@ const preview = await render(config); // same result, without writing output
 
 `loadConfig()` accepts a filesystem path, file URL string, or `URL` object. `build()` and `render()` accept its resolved configuration and an optional flags object.
 
-`build()` and `render()` also return a `dependencies` array of input files, including embedded images; watch mode follows those files. The CLI exits with status 1 when warnings occur. API callers receive the warnings and choose how to handle them.
+`build()` and `render()` also return a `dependencies` array of input files, including embedded images, and `aiDrafts`, the number of `::: ai` blocks; watch mode follows those files. `build()` refuses to write over the config or an input. The CLI exits with status 1 when warnings occur. API callers receive the warnings and choose how to handle them.
 
-For rendering Markdown fragments, import `createRenderer` from `@lfrati/folio/renderer`. Create one renderer per document and call `finish()` after parsing to collect final diagnostics.
+For rendering Markdown fragments, import `createRenderer` from `@lfrati/folio/renderer`. Create one renderer per document, call `parse(text)`, and then `finish()` to collect final diagnostics.
+
+Watch mode rebuilds when any file changes in the folders it watches, because plugins can read files Folio doesn't know about. It ignores the output and what the build itself wrote, so a plugin that generates a file doesn't start a loop; one consequence is that saving a file that isn't an input while a build is running doesn't trigger another build.
 
 ## Development
 
@@ -58,11 +63,13 @@ npm test
 npm run build:example
 ```
 
-The tests cover the dialect, CLI, watcher, plugin assets, and installation of the packed package into an unrelated project. The engine originated in [lfrati/collatz](https://github.com/lfrati/collatz); that project's figures and interactive lab remain in its own plugins.
+The tests cover the dialect, CLI, watcher, plugin assets, and installation of the packed package into an unrelated project.
 
 ## Column width and placement
 
-Set `style` in the config to a CSS file; its rules follow the default theme. These variables control column sizes:
+The default theme is made for desktop windows. It reserves space for the TOC and sidenotes with body padding, then centers `main` in the remaining space with `margin: 0 auto`.
+
+Set `style` in the config to a CSS file; its rules follow the default theme. These variables control column sizes, shown here with their defaults:
 
 ```css
 :root {
@@ -73,4 +80,4 @@ Set `style` in the config to a CSS file; its rules follow the default theme. The
 }
 ```
 
-`main` controls the content column's margins and placement. The desktop [showcase stylesheet](../examples/showcase/style.css) reserves space for the TOC and sidenotes with body padding, then centers `main` in the remaining space with `margin: 0 auto`.
+The [showcase stylesheet](../examples/showcase/style.css) is an example of a small override.

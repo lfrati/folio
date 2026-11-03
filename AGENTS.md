@@ -7,4 +7,4 @@
 - Keep `folio init` minimal and preserve existing files. Generated projects must build using the installed package without reaching back into this checkout.
 - Run `npm test` for engine or CLI changes and `npm run build:demo` for showcase changes. Use desktop browser checks for layout and interactions.
 - Keep the README concise, with at most two sentences per feature; detailed instructions belong in `docs/`.
-- Keep dependencies minimal: use Node built-ins for tooling, justify additions by a concrete need, and follow `docs/dependencies.md` when changing the shipped dependency lock.
+- Keep dependencies minimal: use Node built-ins for tooling, justify additions by a concrete need, and follow `docs/dependencies.md` when changing a dependency pin.

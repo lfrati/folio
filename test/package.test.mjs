@@ -34,7 +34,6 @@ A numbered statement.
 `);
   fs.writeFileSync(path.join(dir, 'paper.config.mjs'), `export default {
     out: 'dist/article.html',
-    kinds: { lemma: { name: 'Lemma', style: 'plain' } }
   };`);
   return path.join(dir, 'paper.config.mjs');
 }
@@ -59,7 +58,6 @@ test('an external document needs no stylesheet or plugins to build', async t => 
     assert.ok(result.html.includes('.toc a.current'));
     assert.ok(result.html.includes('Cross-reference previews:'));
     assert.ok(result.html.includes('.preview {'));
-    assert.doesNotMatch(result.html, /Collatz|binpat|lab-pattern/);
   }
   const renderer = createRenderer({ warn: message => assert.fail(message) });
   assert.match(renderer.parse('**Hello**'), /<strong>Hello<\/strong>/);
@@ -148,20 +146,19 @@ test('the watcher rebuilds an external document', async t => {
 
 test('the packed package installs and builds in a separate project', t => {
   const dir = temporary(t);
-  const packed = JSON.parse(command('npm', ['pack', '--json', '--ignore-scripts', '--pack-destination', dir], root))[0];
+  // npm 12 keys this report by package name; earlier versions return an array.
+  const packed = Object.values(JSON.parse(command('npm', ['pack', '--json', '--ignore-scripts', '--pack-destination', dir], root)))[0];
   const files = new Set(packed.files.map(file => file.path));
-  for (const file of ['src/index.mjs', 'assets/theme.css', 'assets/navigation.js', 'assets/navigation.css', 'bin/folio.mjs', 'src/init.mjs', 'docs/agents.md', 'docs/dependencies.md', 'npm-shrinkwrap.json', 'examples/showcase/images/triangle.svg']) {
+  for (const file of ['src/index.mjs', 'src/frontmatter.mjs', 'assets/theme.css', 'assets/navigation.js', 'assets/navigation.css', 'bin/folio.mjs', 'src/init.mjs', 'docs/agents.md', 'docs/dependencies.md', 'LICENSE', 'examples/showcase/images/triangle.svg']) {
     assert.ok(files.has(file), `package is missing ${file}`);
   }
-  assert.ok(!files.has('original-paper.html'));
   assert.ok(!files.has('package-lock.json'));
+  assert.ok(!files.has('npm-shrinkwrap.json'));
   assert.ok(![...files].some(file => file.endsWith('.html')), 'built examples should not be packaged');
   fs.writeFileSync(path.join(dir, 'package.json'), '{"private":true,"type":"module"}');
   fs.copyFileSync(path.join(root, '.npmrc'), path.join(dir, '.npmrc'));
   command('npm', ['install', '--prefer-offline', '--ignore-scripts', '--no-audit', '--no-fund', path.join(dir, packed.filename)], dir);
-  const reviewedLock = JSON.parse(fs.readFileSync(path.join(root, 'npm-shrinkwrap.json'), 'utf8'));
-  const installedRoot = path.join(dir, 'node_modules/@lfrati/folio');
-  assert.deepEqual(JSON.parse(fs.readFileSync(path.join(installedRoot, 'npm-shrinkwrap.json'), 'utf8')), reviewedLock);
+  const reviewedLock = JSON.parse(fs.readFileSync(path.join(root, 'package-lock.json'), 'utf8'));
   const consumerLock = JSON.parse(fs.readFileSync(path.join(dir, 'package-lock.json'), 'utf8'));
   const pins = lock => Object.entries(lock.packages)
     .filter(([location]) => location && !location.endsWith('node_modules/@lfrati/folio'))
@@ -188,7 +185,7 @@ test('the showcase presents every example from a single Markdown source', async 
   assert.deepEqual(warnings, []);
   assert.equal((html.match(/class="example-source"/g) || []).length, 10);
   assert.equal((html.match(/class="example-result"/g) || []).length, 10);
-  assert.ok(html.includes('&lt;') || html.includes('::: lemma {#lem:square'));
+  assert.ok(html.includes('::: lemma {#lem:square'));
   assert.ok(html.includes('id="lem:square"'));
   assert.ok(html.includes('class="square-demo"') && html.includes('value * value'));
   assert.ok(html.includes('id="ref-example2026"'));

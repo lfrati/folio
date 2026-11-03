@@ -8,6 +8,8 @@
   box-shadow: 0 4px 18px rgba(0, 0, 0, .14);
 }
 .preview > * { margin: 0; }
-.preview > .thm, .preview > .eq { max-width: 40em; }   /* prose still wraps at a reading width */
+.preview > .thm, .preview > .eq, .preview > li, .preview > .ai, .preview > .wip { max-width: 40em; }   /* prose still wraps at a reading width */
+.preview > li { display: grid; grid-template-columns: 4.5em minmax(0, 1fr); gap: .5em; list-style: none; overflow-wrap: anywhere; }  /* a reference, on its own */
+.preview .sn-note { display: none; }  /* its margin isn't there; the note stays one hover away in the text */
 .preview figure.table { overflow: visible; width: min-content; min-width: min(40em, calc(100vw - 3em)); }  /* no inner scrollbar: the popup grows to the table; the caption wraps at a reading width */
 .preview p:last-child { margin-bottom: 0; }

@@ -5,7 +5,7 @@ Use this guide when creating or editing a document with Folio. The [demo](../exa
 ## Start a document
 
 ```sh
-npx --yes --ignore-scripts --min-release-age=14 --package=github:lfrati/folio#v0.3.1 folio init my-paper
+npx --yes --ignore-scripts --min-release-age=14 --allow-git=all --package=github:lfrati/folio#v0.3.1 folio init my-paper
 cd my-paper
 npm install
 npm run build
@@ -49,14 +49,14 @@ Read the document's own instructions and configuration before editing. Follow an
 
 ## Use the dialect
 
-Read [Markdown syntax](markdown.md) for statement blocks, proofs, tables, figure images, citations, sidenotes, and references. Configure named statement types in `kinds`; `proof`, `table`, and `ai` are built in.
+Read [Markdown syntax](markdown.md) for statement blocks, proofs, tables, figure images, citations, sidenotes, and references. `theorem`, `lemma`, `proposition`, `corollary`, `conjecture`, `definition`, `remark`, `proof`, `table`, and `ai` are built in; `kinds` in the config adds other statement types.
 
-Give referenced elements stable IDs such as `lem:identity`, `proof:identity`, `tab:measurements`, or `fig:setup`. Local Markdown images are resolved relative to the source file and embedded in the output; remote images retain their network dependency.
+Give referenced elements stable IDs such as `sec:methods`, `lem:identity`, `proof:identity`, `tab:measurements`, or `fig:setup`. Local Markdown images are resolved relative to the source file and embedded in the output; remote images retain their network dependency.
 
 Use [Plugins](plugins.md) when a reusable document construct needs custom rendering. Use [Configuration and API](getting-started.md) for programmatic builds and CSS controls.
 
 ## Validate edits
 
-Run `npm run build` and resolve warnings about missing references, invalid math, malformed blocks, or missing local images. For layout or interactive changes, inspect the generated document in a desktop browser.
+Run `npm run build` and resolve warnings about missing references, invalid math, malformed blocks, failing plugins, or missing local images; the build exits with status 1 until there are none. For layout or interactive changes, inspect the generated document in a desktop browser.
 
-Use `npm run watch` while writing. Keep AI markers in both the source and the generated output until the human approves their removal.
+Use `npm run watch` while writing. Keep AI markers in both the source and the generated output until the human approves their removal. The build's summary line counts the AI drafts still pending; that count is information, not a warning.

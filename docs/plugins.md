@@ -1,6 +1,6 @@
 # Plugins
 
-Each `.mjs` file in the configured plugin directory is loaded automatically. Plugins are ordered by `order` (default 0), then filename.
+Each `.mjs` file in the configured plugin directory is loaded automatically. Plugins are ordered by `order` (default 0), then filename. Export the hooks below by name, or together as `export default { … }`; a file exporting none of them produces a warning, and helper exports alongside them are fine.
 
 | Export | Purpose |
 | --- | --- |
@@ -25,6 +25,8 @@ Write `` `badge:hello` `` in Markdown to use this plugin. Unregistered prefixes 
 
 Handlers receive `{ config, flags, warn, esc, plugins }`. Use `warn(message)` for diagnostics and `esc(text)` when inserting plain text into HTML.
 
+A handler that throws produces a warning naming the plugin and line, and the page falls back: a span shows as code, a fence as a code block, and a block as its plain Markdown. Returning something other than a string declines in the same way, so return `undefined` to leave a span or fence as written.
+
 ## Block definitions
 
 A definition supplies `render(token, api)` and can supply `lex(body, token, api)`, a numbering `label`, an unnumbered `reference` label, or `figure: false`. By default, the block's body is parsed as Markdown.
@@ -37,7 +39,9 @@ export const blocks = {
 };
 ```
 
-The API includes `parse`, `parseInline`, `div`, `head`, `qed`, `ctx`, `warn`, and `esc`. The full block interface is documented beside `theoremKind()` in `src/render.mjs`.
+While rendering, the API includes `parse`, `parseInline`, `div`, `head`, `qed`, `ctx`, `warn`, and `esc`. While lexing, it includes `block`, `inline`, `ctx`, `warn`, and `esc`. The full block interface is documented beside `theoremKind()` in `src/render.mjs`.
+
+Inside `::: ai` and `::: wip`, the CSS variable `--mark` holds the block's color. Use `color: var(--mark, …)` in plugin styles for anything with its own color, so that a draft stays visibly marked.
 
 ## Browser scripts
 

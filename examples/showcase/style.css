@@ -1,21 +1,7 @@
-:root {
-  --accent: #275f75;
-  --content-width: 57rem;
-  --toc-width: 16rem;
-  --sn-width: 12rem;
-  --sn-gap: 1.5rem;
-}
-header.title .date { display: none; }
-body {
-  font-size: 16px;
-  padding-left: var(--toc-width);
-  padding-right: calc(var(--sn-width) + var(--sn-gap));
-}
-main { max-width: var(--content-width); margin: 0 auto; }
-.toc { width: var(--toc-width); display: block; }
+:root { --accent: #275f75; }
+body { font-size: 16px; }
 p { text-align: left; }
-pre { margin: 0; white-space: pre-wrap; overflow-wrap: anywhere; line-height: 1.55; }
-code { font-size: .85em; }
+pre { margin: 0; }
 .example { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); border: 1px solid var(--rule); border-radius: .4em; margin: 1em 0 2em; overflow: hidden; }
 .example-source, .example-result { min-width: 0; padding: 1.2em; }
 .example-source { background: var(--box); border-right: 1px solid var(--rule); }

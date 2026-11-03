@@ -2,7 +2,7 @@
 
 ## Metadata and sections
 
-Start with a flat `key: value` front-matter block for `title`, `author`, and `abstract`:
+Start with a front-matter block:
 
 ```markdown
 ---
@@ -12,15 +12,25 @@ abstract: What the paper is about.
 ---
 
 # Introduction
-## Background
+## Background {#sec:background}
 # Appendix {-}
 ```
 
-The first two heading levels appear in the table of contents and are numbered. Add `{-}` to leave a heading unnumbered.
+| Key | Meaning |
+| --- | --- |
+| `title` | The title; math and other inline Markdown work |
+| `author` or `authors` | A name, or a list of names |
+| `abstract` | Markdown; use a `\|` block for several paragraphs |
+| `date` | Shown under the title. Defaults to today; an empty `date:` hides it |
+| `lang` | The page's language, `en` by default |
+
+A value can be plain, quoted, a `[a, b]` or `- item` list, or a `|` or `>` block, and a plain value can continue on indented lines. Lines starting with `#` are comments; a `#` later in a line is part of the value. Unknown keys produce warnings.
+
+The first two heading levels appear in the table of contents and are numbered. Add `{-}` to leave a heading unnumbered, `{#sec:id}` to give it an ID you can reference, or both as `{#sec:id -}`.
 
 ## Math
 
-Use `$x^2$` inline and a `$$` block for display math. An ID after the closing delimiter numbers the equation:
+Use `$x^2$` or `\(x^2\)` inline, and `$$ … $$` or `\[ … \]` as a block of their own for display math. An ID after the closing delimiter numbers the equation:
 
 ```markdown
 $$
@@ -30,9 +40,15 @@ $$ {#eq:energy}
 See @eq:energy.
 ```
 
+As in pandoc, a `$` opens only before a non-space, and closes only after a non-space and not before a digit, so `$20,000 and $30,000` stays text. Write `\$` for a dollar sign in text that would otherwise read as math. Display math can't contain a blank line.
+
+Use `aligned`, `gathered`, or a starred environment for several lines. `equation`, `align`, `gather`, and `alignat` add KaTeX's own numbers, which Folio doesn't track, so they produce a warning.
+
+The `macros` option defines macros for all math in the document. A `\newcommand` in one formula also carries over to later ones, so change it with `\renewcommand`.
+
 ## Statements and proofs
 
-Define statement kinds in the configuration, then use `::: kind` blocks:
+`theorem`, `lemma`, `proposition`, `corollary`, `conjecture`, `definition`, and `remark` work out of the box:
 
 ```markdown
 ::: lemma {#lem:identity title="A useful identity"}
@@ -48,6 +64,14 @@ See @lem:identity and @proof:identity.
 
 Each statement kind has its own counter; a proof with an ID can be referenced as `@proof:identity` and appears as “Proof”. Blocks nest, and `::: endkind` closes a named enclosing block.
 
+Add kinds, or rename and restyle the built-in ones, with `kinds` in the config. The `plain` style sets the text in italics and `defn` keeps it upright:
+
+```js
+export default {
+  kinds: { claim: { name: 'Claim' }, example: { name: 'Example', style: 'defn' } },
+};
+```
+
 ## Tables
 
 Wrap a Markdown table in `::: table` to give it a number, reference, and caption:
@@ -56,11 +80,13 @@ Wrap a Markdown table in `::: table` to give it a number, reference, and caption
 ::: table {#tab:values}
 | Input | Output |
 | --- | --- |
-| 1 | 2 |
+| 1 | $|x|$ |
 | 2 | 4 |
 Caption: Example values.
 :::
 ```
+
+Bars inside math don't split a cell. A caption ends at a blank line or the next block, so it can continue on the following lines.
 
 ## Figures
 
@@ -77,13 +103,15 @@ Local images are resolved relative to the Markdown source and embedded as data U
 
 ## References and sidenotes
 
-Use `@lem:identity`, `@proof:identity`, `@eq:energy`, `@tab:values`, or `@fig:example` to link to a block and preview it on hover. Forward references work, and unresolved references produce warnings.
+Use `@sec:background`, `@lem:identity`, `@proof:identity`, `@eq:energy`, `@tab:values`, or `@fig:example` to link to a block and preview it on hover. Forward references work, and unresolved references produce warnings. A name without a colon that matches nothing, like `@someone`, stays plain text.
 
-Write `A sentence.[^detail]` and define the note with `[^detail]: More detail.` elsewhere in the document. The first mention places the note in the margin; later mentions reuse its number.
+A reference needs something to show. A block with an ID but no number, such as `::: note {#note:x}`, is an anchor you can link to with `[text](#note:x)`, and `@note:x` warns.
+
+Write `A sentence.[^detail]` and define the note with `[^detail]: More detail.` elsewhere in the document; indent following lines to continue the note, which is a single paragraph. The first mention places the note in the margin; later mentions reuse its number.
 
 ## Citations
 
-Write `[@key]` to cite an entry in the configured `.bib` file. Folio supports a small BibTeX subset with brace-delimited fields, and generates a references section for cited entries.
+Write `[@key]` to cite an entry in the configured `.bib` file, `[@key, p. 3]` for a page, and `[@a; @b]` for several. Hovering a citation previews the entry, and cited entries appear in a generated references section.
 
 ```bibtex
 @article{example2026,
@@ -93,6 +121,8 @@ Write `[@key]` to cite an entry in the configured `.bib` file. Folio supports a 
   year = {2026}
 }
 ```
+
+Folio reads what BibTeX reads, as exported by tools like arXiv, Crossref, and Zotero: `{…}` and `"…"` values, `@string` macros, `#` joins, and TeX accents. A DOI, arXiv ID, or URL becomes a link. Warnings name entries that can't be read, duplicate keys, and cited entries missing a title, author, or year.
 
 ## AI-authored passages
 
@@ -104,10 +134,12 @@ A draft written by an AI agent.
 ::: endai
 ```
 
-It is labelled **AI draft**, colored red, and marked with a left border. Keep the wrapper until the human accepts the text; use `wip` separately for unfinished work.
+It is labelled **AI draft**, colored red, and marked with a left border, including its links, sidenotes, and numbers. Keep the wrapper until the human accepts the text; use `wip` separately for unfinished work.
 
 ## Other blocks
 
 `::: alpha` gives an ordered list lettered markers, and `::: wip` marks work in progress. Unregistered block names wrap their contents in a matching CSS class.
 
-`::: ralign` and `::: lalign` arrange lines in aligned columns, using ` & ` between cells. `---` and `--` in prose become em and en dashes, while code and math are preserved.
+Any block can take attributes in braces: `::: note {#id .class key="value"}`. Anything else on the opening line produces a warning, and `:::` lines inside fenced code or HTML comments mean nothing.
+
+`::: ralign` and `::: lalign` arrange lines in aligned columns, using ` & ` between cells. `---` and `--` in prose become em and en dashes, while code, math, and bare URLs are preserved.
