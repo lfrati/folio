@@ -114,6 +114,11 @@ test('the CLI works outside the project and reports failed builds', t => {
 test('the watcher rebuilds an external document', async t => {
   const dir = temporary(t);
   const configFile = document(dir);
+  const images = path.join(dir, 'images', 'nested');
+  fs.mkdirSync(images, { recursive: true });
+  const imageFile = path.join(images, 'diagram.svg');
+  fs.writeFileSync(imageFile, '<svg xmlns="http://www.w3.org/2000/svg"><title>Before</title></svg>');
+  fs.appendFileSync(path.join(dir, 'paper.md'), '\n![Diagram](images/nested/diagram.svg)\n');
   const watcher = spawn(process.execPath, [cli, configFile, '--watch'], { cwd: os.tmpdir(), stdio: ['ignore', 'pipe', 'pipe'] });
   let output = '';
   watcher.stdout.on('data', data => { output += data; });
@@ -136,13 +141,16 @@ test('the watcher rebuilds an external document', async t => {
   await until(() => output.includes('watching '));
   fs.appendFileSync(path.join(dir, 'paper.md'), '\nA change after starting the watcher.\n');
   await until(() => fs.readFileSync(path.join(dir, 'dist/article.html'), 'utf8').includes('A change after starting the watcher.'));
+  const updatedImage = '<svg xmlns="http://www.w3.org/2000/svg"><title>After</title></svg>';
+  fs.writeFileSync(imageFile, updatedImage);
+  await until(() => fs.readFileSync(path.join(dir, 'dist/article.html'), 'utf8').includes(Buffer.from(updatedImage).toString('base64')));
 });
 
 test('the packed package installs and builds in a separate project', t => {
   const dir = temporary(t);
   const packed = JSON.parse(command('npm', ['pack', '--json', '--ignore-scripts', '--pack-destination', dir], root))[0];
   const files = new Set(packed.files.map(file => file.path));
-  for (const file of ['src/index.mjs', 'assets/theme.css', 'assets/navigation.js', 'assets/navigation.css', 'bin/folio.mjs']) {
+  for (const file of ['src/index.mjs', 'assets/theme.css', 'assets/navigation.js', 'assets/navigation.css', 'bin/folio.mjs', 'examples/showcase/images/triangle.svg']) {
     assert.ok(files.has(file), `package is missing ${file}`);
   }
   assert.ok(!files.has('original-paper.html'));
@@ -167,4 +175,69 @@ test('the showcase presents every example from a single Markdown source', async 
   assert.ok(html.includes('id="lem:square"'));
   assert.ok(html.includes('class="square-demo"') && html.includes('value * value'));
   assert.ok(html.includes('id="ref-example2026"'));
+});
+
+
+test('proof references work without numbering the proof or changing lemma numbers', () => {
+  const warnings = [];
+  const renderer = createRenderer({ warn: warning => warnings.push(warning), kinds: { lemma: { name: 'Lemma' } } });
+  const html = renderer.parse(`See @proof:first and @proof:second, then @lem:first.
+
+::: proof {#proof:first}
+A proof.
+:::
+
+::: proof {#proof:second title="Proof of the identity"}
+A titled proof.
+:::
+
+::: lemma {#lem:first}
+A statement.
+:::
+`);
+  renderer.finish();
+  assert.deepEqual(warnings, []);
+  assert.ok(html.includes('href="#proof:first">Proof</a>'));
+  assert.ok(html.includes('href="#proof:second">Proof</a>'));
+  assert.ok(html.includes('href="#lem:first">Lemma 1</a>'));
+  assert.ok(html.includes('class="proof thm" id="proof:first"'));
+  assert.ok(html.includes('Proof of the identity.</span>'));
+});
+
+test('local Markdown images are embedded relative to the source with figure captions and references', async t => {
+  const dir = temporary(t);
+  const config = await loadConfig(document(dir));
+  const source = path.join(dir, 'manuscript');
+  fs.mkdirSync(path.join(source, 'images'), { recursive: true });
+  const svg = '<svg xmlns="http://www.w3.org/2000/svg" id="triangle"><path d="M0 0 L1 1"/></svg>';
+  const imageFile = path.join(source, 'images', 'a diagram.svg');
+  fs.writeFileSync(imageFile, svg);
+  const markdown = `::: center {#fig:image}
+![A & **B**](images/a%20diagram.svg#triangle "A title")
+Caption: An image from a local file.
+:::
+
+See @fig:image.
+`;
+  fs.writeFileSync(path.join(source, 'chapter.md'), markdown);
+  const result = await build({ ...config, src: path.join(source, 'chapter.md') });
+  assert.deepEqual(result.warnings, []);
+  assert.ok(result.html.includes(`src="data:image/svg+xml;base64,${Buffer.from(svg).toString('base64')}#triangle"`));
+  assert.ok(result.html.includes('alt="A &amp; B" title="A title"'));
+  assert.ok(result.html.includes('href="#fig:image">Fig. 1</a>'));
+  assert.ok(result.html.includes('<figcaption><b>Fig. 1:</b> An image from a local file.</figcaption>'));
+  assert.ok(result.dependencies.includes(imageFile));
+  assert.equal(fs.readFileSync(config.out, 'utf8'), result.html);
+});
+
+test('remote and data images are retained, while missing local files cause a diagnostic', async t => {
+  const dir = temporary(t);
+  const config = await loadConfig(document(dir));
+  const data = 'data:image/svg+xml;base64,' + Buffer.from('<svg xmlns="http://www.w3.org/2000/svg"/>').toString('base64');
+  fs.writeFileSync(config.src, `![Remote](https://example.com/image.png)\n![Embedded](${data})\n![Missing](missing.png)\n`);
+  const result = await render(config);
+  assert.equal(result.warnings.length, 1);
+  assert.match(result.warnings[0], /^image missing\.png:/);
+  assert.ok(result.html.includes('src="https://example.com/image.png"'));
+  assert.ok(result.html.includes(`src="${data}"`));
 });

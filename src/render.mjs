@@ -16,7 +16,7 @@
 // prefix, `pat:1011`), `fences` (fenced blocks with a registered language) and
 // `comments` (`<!-- … -->` handlers). See plugins.mjs.
 
-import { Marked } from 'marked';
+import { Marked, Renderer } from 'marked';
 import katex from 'katex';
 
 /** Escape for attribute values and text we build ourselves. */
@@ -57,6 +57,7 @@ const END = /^:::[ \t]*end([\w-]+)[ \t]*$/;
 // A block kind says what `::: kind … :::` does:
 //   label     'Lemma', 'Table', …: the block is numbered (its own counter per kind) and,
 //             with an id, can be cited as "Lemma 3"
+//   reference 'Proof', …: reference text for an unnumbered block with an id
 //   figure    default true: a block with a {#fig:x} id is numbered as a figure ("Fig. n"
 //             at its bottom right); false for kinds that are never figures (proof)
 //   lex(body, t, api)   optional. Turn the body text into tokens on t; the default lexes it
@@ -82,6 +83,7 @@ export function theoremKind({ name, style = 'plain' }) {
 
 const builtinKinds = {
   proof: {
+    reference: 'Proof',
     figure: false,
     lex(body, t, api) { t.cls.push('thm'); api.block(body, t.tokens); },
     render(t, api) { api.head(t, { text: 'Proof', titleReplaces: true }); api.qed(t); return api.div(t, api.parse(t.tokens)); },
@@ -123,8 +125,9 @@ function renderRows(t, api) {
  *   fences      { lang: (body, ctx) => html }       fenced blocks ```lang
  *   comments    [ (body, ctx) => html | undefined ] HTML comment handlers; unclaimed comments are dropped
  *   ctx         passed through to the plugin functions
+ *   resolveImage optional image URL transform; the full-page builder embeds local files
  */
-export function createRenderer({ warn, kinds = {}, blocks: pluginBlocks = {}, bib = new Map(), spans = {}, fences = {}, comments = [], ctx = {} }) {
+export function createRenderer({ warn, kinds = {}, blocks: pluginBlocks = {}, bib = new Map(), spans = {}, fences = {}, comments = [], ctx = {}, resolveImage = href => href }) {
   const blocks = { ...builtinKinds };
   for (const [k, v] of Object.entries(kinds)) blocks[k] = theoremKind(v);
   for (const [k, v] of Object.entries(pluginBlocks)) {
@@ -227,6 +230,8 @@ export function createRenderer({ warn, kinds = {}, blocks: pluginBlocks = {}, bi
       if (def.label) {
         t.n = counters[kind] = (counters[kind] || 0) + 1;
         if (attrs.id) setLabel(attrs.id, `${def.label} ${t.n}`, t.n, lineNo);
+      } else if (def.reference && attrs.id) {
+        setLabel(attrs.id, def.reference, null, lineNo);
       } else if (attrs.id?.startsWith('fig:') && def.figure !== false) {
         t.fig = ++counters.figure;
         setLabel(attrs.id, `Fig. ${t.fig}`, t.fig, lineNo);
@@ -429,6 +434,9 @@ export function createRenderer({ warn, kinds = {}, blocks: pluginBlocks = {}, bi
       emStrongMask(src) { return src.replace(/\$[^$\n]+?\$/g, m => 'a'.repeat(m.length)); },
     },
     renderer: {
+      image(token) {
+        return Renderer.prototype.image.call(this, { ...token, href: resolveImage(token.href) });
+      },
       // numbered headings with ids; `# Title {-}` is unnumbered, as in pandoc
       heading({ tokens, depth }) {
         let text = this.parser.parseInline(tokens);

@@ -13,7 +13,7 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
 import { createRenderer, esc } from './render.mjs';
 import { loadBib, renderBibliography } from './bib.mjs';
 import { loadPlugins, collect } from './plugins.mjs';
-import { katexCss, bundleScripts, readAll } from './assets.mjs';
+import { katexCss, bundleScripts, readAll, imageResolver } from './assets.mjs';
 
 const ENGINE_DIR = path.dirname(fileURLToPath(import.meta.url));
 const ASSETS_DIR = fileURLToPath(new URL('../assets/', import.meta.url));
@@ -57,7 +57,7 @@ function frontMatter(text) {
   return { meta, body: text.slice(m[0].length), line: m[0].split('\n').length };
 }
 
-/** Build once and write the page to config.out. Returns { html, warnings, ms }. */
+/** Build once and write the page to config.out. Returns { html, warnings, ms, dependencies }. */
 export async function build(config, flags = {}) {
   const result = await render(config, flags);
   fs.mkdirSync(path.dirname(config.out), { recursive: true });
@@ -65,7 +65,7 @@ export async function build(config, flags = {}) {
   return result;
 }
 
-/** Render the page without writing it. Returns { html, warnings, ms }. */
+/** Render the page without writing it. Returns { html, warnings, ms, dependencies }. */
 export async function render(config, flags = {}) {
   const t0 = performance.now();
   const warnings = [];
@@ -75,7 +75,8 @@ export async function render(config, flags = {}) {
   const hooks = collect(plugins, warn);
   const ctx = { config, flags, warn, esc, plugins };
   const bib = loadBib(config.bib);
-  const R = createRenderer({ warn, kinds: config.kinds, bib, ...hooks, ctx });
+  const images = imageResolver(config.src, warn);
+  const R = createRenderer({ warn, kinds: config.kinds, bib, ...hooks, ctx, resolveImage: images.resolve });
 
   const { meta, body, line } = frontMatter(fs.readFileSync(config.src, 'utf8'));
   const article = R.parse(body, { line });
@@ -126,35 +127,63 @@ ${bundleScripts(scripts, warn)}
 </body>
 </html>
 `;
-  return { html, warnings, ms: performance.now() - t0 };
+  const dependencies = [...new Set([config.src, config.style, config.bib,
+    ...plugins.map(plugin => plugin.file), ...styles, ...scripts, ...images.files,
+  ].filter(Boolean))];
+  return { html, warnings, ms: performance.now() - t0, dependencies };
 }
 
 /** Command line entry: build once, or `--watch` and rebuild on every change. */
 export async function run(configUrl, argv = []) {
   const config = await loadConfig(configUrl);
   if (argv.includes('--watch')) return watch(configURL(configUrl), config, argv);
-  const { html, warnings, ms } = await build(config, parseFlags(argv));
+  const { html, warnings, ms, dependencies } = await build(config, parseFlags(argv));
+  if (process.env.FOLIO_WATCH_REPORT_FD === '3') {
+    fs.writeFileSync(3, JSON.stringify({ out: config.out, directories: [config.dir, config.plugins,
+      ...dependencies.map(file => path.dirname(file)),
+    ].filter(Boolean) }));
+  }
   console.log(`[${new Date().toLocaleTimeString()}] wrote ${path.basename(config.out)} (${(html.length / 1024).toFixed(0)} KB, ${ms.toFixed(0)} ms)`);
   for (const w of warnings) console.log(`  warning: ${w}`);
   process.exitCode = warnings.length ? 1 : 0;
 }
 
 function watch(configUrl, config, argv) {
-  // Each rebuild runs in a fresh child process, so edits to the engine or a plugin take
-  // effect without restarting the watcher, and a stale watcher never writes old output.
+  // A fresh child loads config/plugins on every build. A private pipe reports the
+  // directories containing actual inputs, including images outside the project.
   const args = argv.filter(a => a !== '--watch');
-  const rebuild = () => spawnSync(process.execPath, [CLI_FILE, fileURLToPath(configUrl), ...args], { stdio: 'inherit' });
-  rebuild();
-  let timer = null;
+  const watchers = new Map();
+  let timer = null, out = config.out;
   const trigger = (dir, file) => {
-    if (file && !/\.(md|mjs|js|css|bib|py)$/.test(file)) return;
-    if (file && path.resolve(dir, file) === config.out) return;
+    if (file && path.resolve(dir, file) === out) return;
     clearTimeout(timer);
     timer = setTimeout(rebuild, 80);
   };
-  const dirs = [config.dir, ENGINE_DIR, ASSETS_DIR, config.plugins,
-    ...[config.src, config.style, config.bib].filter(Boolean).map(f => path.dirname(f)),
-  ].filter(d => d && fs.existsSync(d));
-  for (const d of new Set(dirs)) fs.watch(d, (evt, file) => trigger(d, file));
-  console.log(`watching ${[...new Set(dirs)].map(d => path.relative(config.dir, d) || '.').join(', ')} … (Ctrl-C to stop)`);
+  const update = directories => {
+    const dirs = new Set([config.dir, ENGINE_DIR, ASSETS_DIR, ...directories].filter(Boolean).map(dir => {
+      while (!fs.existsSync(dir) && path.dirname(dir) !== dir) dir = path.dirname(dir);
+      return dir;
+    }));
+    for (const [dir, watcher] of watchers) {
+      if (!dirs.has(dir)) { watcher.close(); watchers.delete(dir); }
+    }
+    for (const dir of dirs) {
+      if (!watchers.has(dir)) watchers.set(dir, fs.watch(dir, (evt, file) => trigger(dir, file)));
+    }
+  };
+  function rebuild() {
+    const child = spawnSync(process.execPath, [CLI_FILE, fileURLToPath(configUrl), ...args], {
+      stdio: ['ignore', 'inherit', 'inherit', 'pipe'],
+      env: { ...process.env, FOLIO_WATCH_REPORT_FD: '3' },
+    });
+    const report = child.output?.[3]?.toString();
+    if (report) {
+      const inputs = JSON.parse(report);
+      out = inputs.out;
+      update(inputs.directories);
+    }
+  }
+  update([config.plugins, path.dirname(config.src)]);
+  rebuild();
+  console.log(`watching ${[...watchers.keys()].map(dir => path.relative(config.dir, dir) || '.').join(', ')} … (Ctrl-C to stop)`);
 }

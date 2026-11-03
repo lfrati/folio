@@ -39,14 +39,14 @@ Define statement kinds in the configuration, then use `::: kind` blocks:
 $(x+1)^2 = x^2 + 2x + 1$.
 :::
 
-::: proof
+::: proof {#proof:identity}
 Expand the product.
 :::
 
-See @lem:identity.
+See @lem:identity and @proof:identity.
 ```
 
-Each statement kind has its own counter; the built-in `proof` adds an end marker. Blocks nest, and `::: endkind` closes a named enclosing block.
+Each statement kind has its own counter; a proof with an ID can be referenced as `@proof:identity` and appears as “Proof”. Blocks nest, and `::: endkind` closes a named enclosing block.
 
 ## Tables
 
@@ -68,14 +68,16 @@ A container with a `fig:` ID becomes a numbered figure. `center`, `pair`, `ralig
 
 ```markdown
 ::: center {#fig:example}
-Some figure content.
-Caption: A simple figure.
+![A diagram of the experiment](images/experiment.png)
+Caption: The experimental setup.
 :::
 ```
 
+Local images are resolved relative to the Markdown source and embedded as data URLs, including PNG, JPEG, GIF, SVG, WebP, AVIF, BMP, and ICO files. Remote URLs remain external; missing local images produce build warnings.
+
 ## References and sidenotes
 
-Use `@lem:identity`, `@eq:energy`, `@tab:values`, or `@fig:example` to link to a numbered element. Forward references work, and unresolved references produce warnings.
+Use `@lem:identity`, `@proof:identity`, `@eq:energy`, `@tab:values`, or `@fig:example` to link to a block and preview it on hover. Forward references work, and unresolved references produce warnings.
 
 Write `A sentence.[^detail]` and define the note with `[^detail]: More detail.` elsewhere in the document. The first mention places the note in the margin; later mentions reuse its number.
 

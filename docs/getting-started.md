@@ -3,7 +3,7 @@
 Use Node.js 20 or newer. Install Folio from its Git repository:
 
 ```sh
-npm install github:lfrati/folio#v0.1.0
+npm install github:lfrati/folio#v0.2.0
 ```
 
 Create `paper.md` and `paper.config.mjs` in your project:
@@ -57,7 +57,7 @@ const preview = await render(config); // same result, without writing output
 
 `loadConfig()` accepts a filesystem path, file URL string, or `URL` object. `build()` and `render()` accept its resolved configuration and an optional flags object.
 
-The CLI exits with status 1 when warnings occur. API callers receive the warnings and choose how to handle them.
+`build()` and `render()` also return a `dependencies` array of input files, including embedded images; watch mode follows those files. The CLI exits with status 1 when warnings occur. API callers receive the warnings and choose how to handle them.
 
 For rendering Markdown fragments, import `createRenderer` from `@lfrati/folio/renderer`. Create one renderer per document and call `finish()` after parsing to collect final diagnostics.
 
@@ -70,3 +70,18 @@ npm run build:example
 ```
 
 The tests cover the dialect, CLI, watcher, plugin assets, and installation of the packed package into an unrelated project. The engine originated in [lfrati/collatz](https://github.com/lfrati/collatz); that project's figures and interactive lab remain in its own plugins.
+
+## Column width and placement
+
+Set `style` in the config to a CSS file; its rules follow the default theme. These variables control column sizes:
+
+```css
+:root {
+  --content-width: 57rem;
+  --toc-width: 16rem;
+  --sn-width: 12rem;
+  --sn-gap: 1.5rem;
+}
+```
+
+`main` controls the content column's margins and placement. The desktop [showcase stylesheet](../examples/showcase/style.css) reserves space for the TOC and sidenotes with body padding, then centers `main` in the remaining space with `margin: 0 auto`.

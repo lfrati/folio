@@ -6,8 +6,8 @@ Folio turns Markdown into a single HTML document with math, references, and inte
 - **Table of contents:** Generated from headings, with section numbering and the current section highlighted as you scroll.
 - **Math:** Inline and display equations rendered with KaTeX, with optional equation numbers.
 - **Statements and proofs:** Configurable theorem, lemma, and definition blocks, plus proofs with an end marker.
-- **Cross-references:** Links to statements, equations, tables, and figures, with hover previews.
-- **Figures:** Numbered figure containers and captions; plugins can draw custom diagrams.
+- **Cross-references:** Hover over a lemma, proof, equation, table, or figure reference to preview its contents.
+- **Figures:** Images and plugin-generated diagrams with numbered captions and references; local image files are embedded in the HTML.
 - **Sidenotes:** Numbered notes alongside the text.
 - **Citations:** BibTeX citations and an automatically generated references section.
 - **Plugins:** Custom inline markup, fenced code blocks, and document blocks, with optional JavaScript and CSS.

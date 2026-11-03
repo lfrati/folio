@@ -27,7 +27,7 @@ Handlers receive `{ config, flags, warn, esc, plugins }`. Use `warn(message)` fo
 
 ## Block definitions
 
-A definition supplies `render(token, api)` and can supply `lex(body, token, api)`, a numbering `label`, or `figure: false`. By default, the block's body is parsed as Markdown.
+A definition supplies `render(token, api)` and can supply `lex(body, token, api)`, a numbering `label`, an unnumbered `reference` label, or `figure: false`. By default, the block's body is parsed as Markdown.
 
 ```js
 export const blocks = {
@@ -47,4 +47,4 @@ Use plain JavaScript without imports, default exports, or duplicate top-level de
 
 ## Embedded assets
 
-Folio embeds plugin CSS and JavaScript plus KaTeX fonts. Images, CSS `url()` references, and network requests made by plugins must be embedded or otherwise handled by the plugin to keep the final document fully offline.
+Folio embeds plugin CSS and JavaScript plus KaTeX fonts. Local Markdown images are also embedded, relative to the source document. Raw HTML images, remote image URLs, CSS `url()` references, and network requests made by plugins retain their external dependencies.

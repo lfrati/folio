@@ -1,8 +1,18 @@
-:root { --accent: #275f75; }
+:root {
+  --accent: #275f75;
+  --content-width: 57rem;
+  --toc-width: 16rem;
+  --sn-width: 12rem;
+  --sn-gap: 1.5rem;
+}
 header.title .date { display: none; }
-body { font-size: 16px; }
-main { max-width: 72em; }
-@media (min-width: 62em) { main { margin-left: 17em; margin-right: 1em; } }
+body {
+  font-size: 16px;
+  padding-left: var(--toc-width);
+  padding-right: calc(var(--sn-width) + var(--sn-gap));
+}
+main { max-width: var(--content-width); margin: 0 auto; }
+.toc { width: var(--toc-width); display: block; }
 p { text-align: left; }
 pre { margin: 0; white-space: pre-wrap; overflow-wrap: anywhere; line-height: 1.55; }
 code { font-size: .85em; }
@@ -12,7 +22,6 @@ code { font-size: .85em; }
 .example-label { color: var(--muted); text-transform: uppercase; letter-spacing: .08em; font: .7rem system-ui, sans-serif; margin-bottom: 1rem; }
 .example-result > :last-child { margin-bottom: 0; }
 .example-result h1, .example-result h2 { margin-top: 0; }
-.example-result .sn-note { width: 9em; margin: 0 0 .8em 1em; }
 .example-result figure.fig { flex-wrap: wrap; }
 .example-result .katex-display { max-width: 100%; }
 .demo-bars { display: block; width: 10em; height: 7em; fill: var(--accent); }
@@ -20,7 +29,3 @@ code { font-size: .85em; }
 .square-demo label { display: flex; align-items: center; gap: 1em; }
 .square-demo input { width: 100%; accent-color: var(--accent); }
 .square-demo output { font-size: 1.5em; }
-@media (max-width: 50em) {
-  .example { grid-template-columns: minmax(0, 1fr); }
-  .example-source { border-right: 0; border-bottom: 1px solid var(--rule); }
-}

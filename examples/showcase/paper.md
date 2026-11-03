@@ -35,7 +35,7 @@ Configure the statement names you need, such as lemma, theorem, or definition. P
 For every real $x$, $(x+1)^2 = x^2 + 2x + 1$.
 :::
 
-::: proof
+::: proof {#proof:square}
 Expand the product and collect terms.
 :::
 :::
@@ -57,15 +57,26 @@ Caption: The first three squares.
 
 # Cross-references
 
-Write an element's ID after `@` to insert its number and a link. Hover over the links below to preview their targets.
+Write an element's ID after `@` to insert a reference link. Hover over a lemma, proof, equation, table, or figure reference to preview that block.
 
 ::: example
-See @eq:square, @lem:square, and @tab:squares.
+See @eq:square, @lem:square, @proof:square, and @tab:squares.
 :::
 
 # Figures
 
-Give a container a figure ID and an optional caption. This example uses a small plugin to turn a list of values into SVG bars.
+Put a Markdown image inside a figure container to give it a number, caption, and reference. Local PNG, JPEG, SVG, GIF, WebP, and AVIF images are embedded in the HTML so it can travel as one file.
+
+::: example
+::: center {#fig:triangle}
+![A right triangle with sides 3, 4, and 5](images/triangle.svg)
+Caption: An image included from a local file.
+:::
+
+See @fig:triangle.
+:::
+
+Image paths are relative to the Markdown file; remote image URLs keep their network dependency. Plugins can also draw figures directly, as in this SVG bar chart.
 
 ::: example
 ::: center {#fig:bars}
@@ -80,11 +91,15 @@ See @fig:bars.
 
 Put a note marker in the text and define its contents elsewhere. The first reference displays the numbered note beside the text.
 
-::: example
+```markdown
 An observation with a little extra detail.[^detail]
 
-[^detail]: Notes stay beside the text.
-:::
+[^detail]: Notes stay beside the text, in the margin.
+```
+
+An observation with a little extra detail.[^detail]
+
+[^detail]: Notes stay beside the text, in the margin.
 
 # Citations
 
@@ -121,7 +136,7 @@ The bars, slider, and source/result panels are implemented in the demo's [exampl
 Install Folio and create `paper.md` plus `paper.config.mjs`:
 
 ```sh
-npm install github:lfrati/folio#v0.1.0
+npm install github:lfrati/folio#v0.2.0
 ```
 
 ```js

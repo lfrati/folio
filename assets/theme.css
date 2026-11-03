@@ -9,6 +9,8 @@
   --box: #f4f1ea;
   --error: #d62828;
   --wip: #c0262c;      /* text still being proved or reviewed */
+  --content-width: 57em;
+  --toc-width: 16em;
   color-scheme: light;
 }
 
@@ -19,11 +21,11 @@ body {
   font-size: 17px;
   line-height: 1.5;
 }
-main { max-width: 57em; margin: 0 auto; padding: 2.5rem 1.25rem 5rem; }
+main { max-width: var(--content-width); margin: 0 auto; padding: 2.5rem 1.25rem 5rem; }
 
 /* table of contents: a sticky column on the left, hidden when the window is too narrow */
 .toc {
-  position: fixed; top: 0; left: 0; bottom: 0; width: 16em; overflow-y: auto;
+  position: fixed; top: 0; left: 0; bottom: 0; width: var(--toc-width); overflow-y: auto;
   padding: 2.5rem 1.25rem; box-sizing: border-box; font-size: .85em; line-height: 1.35;
   border-right: 1px solid var(--rule); background: var(--bg);
 }
@@ -37,7 +39,7 @@ main { max-width: 57em; margin: 0 auto; padding: 2.5rem 1.25rem 5rem; }
 .toc li.d2 .secno { min-width: 2.2em; }
 .toc .katex { font-size: 1em; }
 /* the column sits left of centre: a quarter of the free space on its left, the rest on the right for sidenotes */
-@media (min-width: 62em) { main { margin-left: calc(16em + (100% - 16em - 57em) / 4); } }
+@media (min-width: 62em) { main { margin-left: calc(var(--toc-width) + (100% - var(--toc-width) - var(--content-width)) / 4); } }
 @media (max-width: 62em) { .toc { display: none; } }
 
 /* title block */
@@ -101,7 +103,8 @@ figure.table figcaption b { color: var(--fg); }
 /* numbered figures: ::: center / pair / ralign / lalign {#fig:x} — the block keeps
    its centring, "Fig. n" sits at the bottom right */
 figure.fig { display: flex; align-items: flex-end; margin: 1.2em 0; }
-figure.fig > .center, figure.fig > .pair, figure.fig > .ralign, figure.fig > .lalign { flex: 1; margin: 0; }
+figure.fig > .center, figure.fig > .pair, figure.fig > .ralign, figure.fig > .lalign { flex: 1; min-width: 0; margin: 0; }
+figure.fig img { display: block; max-width: 100%; height: auto; }
 figure.fig .figno { color: var(--muted); margin-left: 1em; }
 /* …or, with a Caption: line, the caption below the block, set like a table's */
 figure.fig.captioned { display: block; }
