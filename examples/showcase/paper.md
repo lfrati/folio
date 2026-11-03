@@ -147,7 +147,7 @@ This paragraph was drafted by an AI agent.
 Create a minimal project with a Hello, world document and agent instructions:
 
 ```sh
-npx --yes --ignore-scripts --min-release-age=14 --allow-git=all --package=github:lfrati/folio#v0.3.1 folio init my-paper
+npx --yes --ignore-scripts --min-release-age=14 --allow-git=all --package=github:lfrati/folio#v0.4.0 folio init my-paper
 cd my-paper
 npm install
 npm run build

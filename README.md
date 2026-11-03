@@ -19,7 +19,7 @@ The [showcase](examples/showcase/paper.md) shows Markdown source beside its rend
 Start a minimal document with:
 
 ```sh
-npx --yes --ignore-scripts --min-release-age=14 --allow-git=all --package=github:lfrati/folio#v0.3.1 folio init my-paper
+npx --yes --ignore-scripts --min-release-age=14 --allow-git=all --package=github:lfrati/folio#v0.4.0 folio init my-paper
 cd my-paper
 npm install
 npm run build

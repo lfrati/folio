@@ -5,7 +5,7 @@ Use this guide when creating or editing a document with Folio. The [demo](../exa
 ## Start a document
 
 ```sh
-npx --yes --ignore-scripts --min-release-age=14 --allow-git=all --package=github:lfrati/folio#v0.3.1 folio init my-paper
+npx --yes --ignore-scripts --min-release-age=14 --allow-git=all --package=github:lfrati/folio#v0.4.0 folio init my-paper
 cd my-paper
 npm install
 npm run build
