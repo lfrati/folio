@@ -1,0 +1,39 @@
+{
+  "name": "@lfrati/folio",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Markdown papers with math, references, plugins, and interactive figures in one portable HTML file.",
+  "license": "UNLICENSED",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/lfrati/folio.git"
+  },
+  "exports": {
+    ".": "./src/index.mjs",
+    "./renderer": "./src/render.mjs",
+    "./theme.css": "./assets/theme.css"
+  },
+  "bin": {
+    "folio": "./bin/folio.mjs"
+  },
+  "files": [
+    "src/",
+    "assets/",
+    "bin/",
+    "docs/",
+    "examples/"
+  ],
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "test": "node test/test.mjs && node --test test/package.test.mjs",
+    "build:example": "node bin/folio.mjs examples/basic/paper.config.mjs",
+    "build:demo": "node bin/folio.mjs examples/showcase/paper.config.mjs"
+  },
+  "dependencies": {
+    "katex": "0.18.4",
+    "marked": "18.0.10"
+  }
+}

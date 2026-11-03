@@ -1,0 +1,13 @@
+/* hover preview of a cross-referenced block (see navigation.js) */
+.preview {
+  position: fixed; z-index: 10; box-sizing: border-box;
+  width: max-content; max-width: calc(100vw - 1em);   /* sized to the content: a wide table gets a wide popup */
+  max-height: 60vh; overflow: auto; scrollbar-gutter: stable;
+  padding: .7em 1em; font-size: .95em;
+  background: var(--bg); border: 1px solid var(--rule); border-radius: .3em;
+  box-shadow: 0 4px 18px rgba(0, 0, 0, .14);
+}
+.preview > * { margin: 0; }
+.preview > .thm, .preview > .eq { max-width: 40em; }   /* prose still wraps at a reading width */
+.preview figure.table { overflow: visible; width: min-content; min-width: min(40em, calc(100vw - 3em)); }  /* no inner scrollbar: the popup grows to the table; the caption wraps at a reading width */
+.preview p:last-child { margin-bottom: 0; }

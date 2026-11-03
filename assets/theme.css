@@ -1,0 +1,141 @@
+/* Page styles for the generated paper (light only). KaTeX's own stylesheet is inlined before this. */
+
+:root {
+  --bg: #fffdf8;
+  --fg: #1a1a1a;
+  --muted: #6b6b6b;
+  --rule: #d8d4cc;
+  --accent: #8a1c1c;
+  --box: #f4f1ea;
+  --error: #d62828;
+  --wip: #c0262c;      /* text still being proved or reviewed */
+  color-scheme: light;
+}
+
+html { background: var(--bg); color: var(--fg); }
+body {
+  margin: 0;
+  font-family: "Latin Modern Roman", "CMU Serif", Georgia, "Times New Roman", serif;
+  font-size: 17px;
+  line-height: 1.5;
+}
+main { max-width: 57em; margin: 0 auto; padding: 2.5rem 1.25rem 5rem; }
+
+/* table of contents: a sticky column on the left, hidden when the window is too narrow */
+.toc {
+  position: fixed; top: 0; left: 0; bottom: 0; width: 16em; overflow-y: auto;
+  padding: 2.5rem 1.25rem; box-sizing: border-box; font-size: .85em; line-height: 1.35;
+  border-right: 1px solid var(--rule); background: var(--bg);
+}
+.toc ul { list-style: none; margin: 0; padding: 0; }
+.toc li { margin: .35em 0; }
+.toc li.d2 { padding-left: 1.4em; }
+.toc a { color: var(--fg); display: block; }
+.toc a:hover { color: var(--accent); text-decoration: none; }
+.toc a.current { color: var(--accent); }
+.toc .secno { display: inline-block; min-width: 1.6em; color: var(--muted); }
+.toc li.d2 .secno { min-width: 2.2em; }
+.toc .katex { font-size: 1em; }
+/* the column sits left of centre: a quarter of the free space on its left, the rest on the right for sidenotes */
+@media (min-width: 62em) { main { margin-left: calc(16em + (100% - 16em - 57em) / 4); } }
+@media (max-width: 62em) { .toc { display: none; } }
+
+/* title block */
+header.title { text-align: center; margin-bottom: 2.5rem; }
+header.title h1 { font-size: 1.7em; font-weight: normal; margin: 0 0 .6rem; }
+header.title .author { font-size: 1.1em; }
+header.title .date { color: var(--muted); }
+.abstract { margin: 1.5rem 2.5em; }
+.abstract > p:first-child::before { content: "Abstract. "; font-weight: bold; }
+
+h1, h2, h3 { font-weight: bold; line-height: 1.25; }
+h1 { font-size: 1.35em; margin: 2.2rem 0 .8rem; }
+h2 { font-size: 1.15em; margin: 1.8rem 0 .6rem; }
+h1 .secno, h2 .secno { margin-right: .6em; }
+p { margin: 0 0 .9em; text-align: justify; hyphens: auto; }
+a { color: var(--accent); text-decoration: none; }
+a:hover { text-decoration: underline; }
+em { font-style: italic; }
+
+/* work in progress: `::: wip … ::: endwip` around blocks.
+   Red text, and a thin red rule in the left margin so a long block stays marked on scroll. */
+div.wip { color: var(--wip); border-left: 2px solid var(--wip); margin-left: -1em; padding-left: calc(1em - 2px); }
+div.wip .thm-head, div.wip figcaption b { color: var(--wip); }
+
+/* theorem-like blocks */
+.thm { margin: 1.2em 0; }
+.thm.plain > p, .thm.plain > ul, .thm.plain > ol { font-style: italic; }
+.thm.plain em { font-style: normal; }
+.thm-head { font-weight: bold; font-style: normal; }
+.proof .thm-head { font-weight: normal; font-style: italic; }
+.qed { float: right; margin-left: 1em; }
+.qed::after { content: "\25A1"; }
+
+/* centred figure rows */
+/* A centred block whose rows are right-aligned to each other. */
+.center { display: grid; justify-content: center; justify-items: end; row-gap: .5em; margin: 1.2em 0; }
+.center p { margin: 0; text-align: right; }
+.big { font-size: 2.2em; }
+.pair { display: grid; grid-template-columns: auto auto; gap: .2em 3em; justify-content: center; justify-items: end; margin: 1.2em 0; }
+.pair p { margin: .2em 0; }
+/* ::: ralign / ::: lalign — cells separated by & ; every column right- (resp. left-) aligned */
+.ralign, .lalign { display: grid; justify-content: center; align-items: center; gap: .5em .6em; margin: 1.2em 0; }
+.ralign { justify-items: end; }
+.lalign { justify-items: start; }
+
+/* tables */
+/* only the table scrolls, sideways, when it is wider than the column; the figure itself is
+   never a scroll container, so sub-pixel rounding of the caption cannot summon a scrollbar */
+figure.table { margin: 1.5em 0; }
+figure.table table { display: block; width: fit-content; max-width: 100%; overflow-x: auto; overflow-y: hidden; margin: 0 auto; border-collapse: collapse; }
+figure.table th, figure.table td { padding: .25em .8em; text-align: left; white-space: nowrap; }
+figure.table th { font-weight: normal; border-bottom: 1px solid var(--fg); }
+figure.table figcaption { margin-top: .6em; text-align: center; font-size: .95em; color: var(--muted); }
+figure.table figcaption b { color: var(--fg); }
+
+/* numbered display equations */
+.eq { display: flex; align-items: center; margin: .8em 0; }
+.eq .katex-display { flex: 1; margin: 0; }
+.eq .eqno { color: var(--muted); }
+
+/* numbered figures: ::: center / pair / ralign / lalign {#fig:x} — the block keeps
+   its centring, "Fig. n" sits at the bottom right */
+figure.fig { display: flex; align-items: flex-end; margin: 1.2em 0; }
+figure.fig > .center, figure.fig > .pair, figure.fig > .ralign, figure.fig > .lalign { flex: 1; margin: 0; }
+figure.fig .figno { color: var(--muted); margin-left: 1em; }
+/* …or, with a Caption: line, the caption below the block, set like a table's */
+figure.fig.captioned { display: block; }
+figure.fig.captioned figcaption { margin-top: .6em; text-align: center; font-size: .95em; color: var(--muted); }
+figure.fig.captioned figcaption b { color: var(--fg); }
+.katex-display { overflow-x: auto; overflow-y: hidden; }
+
+/* lists */
+.alpha ol { list-style-type: lower-alpha; }
+ol, ul { padding-left: 2em; }
+li { margin: .2em 0; }
+
+/* sidenotes: [^id] in the text, the note floated into the right margin beside
+   its mark, always visible (no narrow-screen handling). Consecutive notes stack
+   because each clears the previous right float. */
+:root { --sn-width: 16rem; --sn-gap: 2.5rem; }
+.sn-ref { font-weight: bold; color: var(--accent); }
+.sn-ref.bad { color: var(--error); }
+.sn-note {
+  float: right; clear: right;
+  width: var(--sn-width);
+  margin: 0 calc(-1 * (var(--sn-width) + var(--sn-gap))) .8em 1em;
+  font-size: .85em; line-height: 1.4; font-style: normal; color: var(--muted);
+}
+.sn-note .sn-num { font-weight: bold; margin-right: .35em; color: var(--accent); }
+.sn-note em { font-style: italic; } /* even inside a lemma, whose upright-em rule would otherwise win */
+.sn:hover .sn-ref, .sn:hover .sn-note { color: var(--accent); }
+
+/* references */
+.references ol { list-style: none; padding: 0; }
+.references li { display: grid; grid-template-columns: 4.5em 1fr; gap: .5em; }
+
+/* narrow windows */
+@media (max-width: 40em) {
+  body { font-size: 16px; }
+  p { text-align: left; }
+}

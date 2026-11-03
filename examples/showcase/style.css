@@ -1,0 +1,26 @@
+:root { --accent: #275f75; }
+header.title .date { display: none; }
+body { font-size: 16px; }
+main { max-width: 72em; }
+@media (min-width: 62em) { main { margin-left: 17em; margin-right: 1em; } }
+p { text-align: left; }
+pre { margin: 0; white-space: pre-wrap; overflow-wrap: anywhere; line-height: 1.55; }
+code { font-size: .85em; }
+.example { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); border: 1px solid var(--rule); border-radius: .4em; margin: 1em 0 2em; overflow: hidden; }
+.example-source, .example-result { min-width: 0; padding: 1.2em; }
+.example-source { background: var(--box); border-right: 1px solid var(--rule); }
+.example-label { color: var(--muted); text-transform: uppercase; letter-spacing: .08em; font: .7rem system-ui, sans-serif; margin-bottom: 1rem; }
+.example-result > :last-child { margin-bottom: 0; }
+.example-result h1, .example-result h2 { margin-top: 0; }
+.example-result .sn-note { width: 9em; margin: 0 0 .8em 1em; }
+.example-result figure.fig { flex-wrap: wrap; }
+.example-result .katex-display { max-width: 100%; }
+.demo-bars { display: block; width: 10em; height: 7em; fill: var(--accent); }
+.square-demo { display: grid; gap: 1em; }
+.square-demo label { display: flex; align-items: center; gap: 1em; }
+.square-demo input { width: 100%; accent-color: var(--accent); }
+.square-demo output { font-size: 1.5em; }
+@media (max-width: 50em) {
+  .example { grid-template-columns: minmax(0, 1fr); }
+  .example-source { border-right: 0; border-bottom: 1px solid var(--rule); }
+}
