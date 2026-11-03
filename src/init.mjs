@@ -31,11 +31,7 @@ export function initProject(target = '.') {
 - Run \`npm run build\` after edits and resolve build warnings. Use \`npm run watch\` while writing.
 `,
   };
-  const conflicts = [];
-  for (const name of Object.keys(files)) {
-    try { fs.lstatSync(path.join(directory, name)); conflicts.push(name); }
-    catch (error) { if (error.code !== 'ENOENT') throw error; }
-  }
+  const conflicts = Object.keys(files).filter(name => fs.lstatSync(path.join(directory, name), { throwIfNoEntry: false }));
   if (conflicts.length) throw new Error(`Cannot initialize ${directory}: already contains ${conflicts.join(', ')}. Choose a new directory.`);
 
   fs.mkdirSync(directory, { recursive: true });

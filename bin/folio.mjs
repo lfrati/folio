@@ -26,8 +26,6 @@ Existing files are preserved; dependencies are installed separately with npm ins
       if (directory !== process.cwd()) console.log(`  cd ${quote(directory)}`);
       console.log('  npm install\n  npm run build\n\nOpen paper.html, or run npm run watch while editing.');
     } else {
-      const option = args.find(arg => /^-(?!-)/.test(arg));
-      if (option) throw new Error(`unknown option ${option}; see folio --help.`);
       const positional = args.filter(arg => !arg.startsWith('--'));
       if (positional.length > 1) throw new Error('Expected at most one configuration file; see folio --help.');
       const config = positional[0] || 'paper.config.mjs';

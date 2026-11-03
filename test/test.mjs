@@ -44,8 +44,8 @@ const expectMarkup = [
   '<div class="lemma thm plain" id="lem:one">\n<p><span class="thm-head">Lemma 1 (First).</span> Body of the lemma',
   '<figure class="fig" id="fig:f"><div class="center">', '<span class="figno">Fig. 1</span></figure>',
   '<i>badge</i>', '<p><span class="thm-head">Proof.</span> First line. Last line. <span class="qed"></span></p>',
-  // table with caption, comment dropped and the cell trimmed
-  '<figure class="table" id="tab:t">', '<td><b class="box">2</b></td>', '<figcaption><b>Table 1:</b> A caption with',
+  // table with caption, comment dropped
+  '<figure class="table" id="tab:t">', '<td><b class="box">2</b> </td>', '<figcaption><b>Table 1:</b> A caption with',
   // ralign grid padded to the widest row
   '<div class="ralign" style="grid-template-columns: repeat(3, auto)"><span><b class="box">r1</b></span>', '<span>e</span><span></span></div>',
   // definition style

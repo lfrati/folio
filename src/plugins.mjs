@@ -1,12 +1,11 @@
 // Plugin discovery. A plugin is one `*.mjs` file in the paper's plugin folder, in the
 // spirit of Hugo's shortcodes: the author writes `pat:1011` in the paper and the
-// plugin says what that means. A plugin may export any of (by name, or together as
-// `export default { … }`):
+// plugin says what that means. A plugin may export any of these, by name:
 //
 //   spans     { prefix: (arg, ctx) => html }        code span `prefix:arg`
 //   fences    { lang: (body, ctx) => html }         fenced block ```lang
-//   blocks    { kind: { label?, figure?, lex?, render } }   a `::: kind … :::` block; the
-//                                                   interface is BLOCK KINDS in render.mjs
+//   blocks    { kind: { label?, figure?, caption?, lex?, render } }   a `::: kind … :::` block;
+//                                                   the interface is BLOCK KINDS in render.mjs
 //   comments  (body, ctx) => html | undefined       an HTML comment `<!-- body -->`; return
 //                                                   undefined to leave it to the next plugin
 //   browser   ['./file.js', …]                      scripts inlined into the page, in order
@@ -16,40 +15,36 @@
 //   order     number, default 0                     load order (then by file name); a plugin whose
 //                                                   browser script needs another's goes later
 //
-// Every function receives `ctx`: { config, flags, warn, esc, plugins }. A function that throws
-// produces a warning naming the plugin; the page falls back to showing the source.
+// Every function receives `ctx`: { config, flags, warn, esc, plugins }. A function that throws,
+// or isn't one, produces a warning naming the plugin; the page falls back to showing the source.
 
 import fs from 'node:fs';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
 
-// Probably meant one of the hooks: other exports are allowed, a plugin may share helpers.
-const NEAR_MISSES = { span: 'spans', fence: 'fences', block: 'blocks', comment: 'comments', style: 'styles', script: 'browser', scripts: 'browser' };
 const HOOKS = ['spans', 'fences', 'blocks', 'comments', 'browser', 'styles', 'order'];
+
+// What stands in for a block kind whose `lex` or `render` failed: it reads and shows as markdown.
+const relex = (body, t, api) => { t.tokens = []; t.rows = []; api.block(body, t.tokens); };
+const plain = (t, api) => api.div(t, api.parse(t.tokens));
 
 /** Where in `file` an error happened, as ` line n`, read from its stack; '' if it doesn't say. */
 export function locate(error, file) {
-  const quote = s => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-  const m = new RegExp(`(?:${quote(pathToFileURL(file).href)}|${quote(file)}):(\\d+)`).exec(String(error?.stack ?? ''));
-  return m ? ` line ${m[1]}` : '';
+  const stack = String(error?.stack ?? ''), tail = `/${path.basename(file)}:`, i = stack.indexOf(tail);
+  const line = i < 0 ? NaN : parseInt(stack.slice(i + tail.length), 10);
+  return line ? ` line ${line}` : '';
 }
 
 export async function loadPlugins(dir, warn) {
   if (!dir || !fs.existsSync(dir)) return [];
-  const files = fs.readdirSync(dir).filter(f => f.endsWith('.mjs')).sort();
   const plugins = [];
-  for (const f of files) {
+  for (const f of fs.readdirSync(dir).filter(f => f.endsWith('.mjs')).sort()) {
     const file = path.join(dir, f);
     const name = f.replace(/\.mjs$/, '');
     try {
-      const { default: merged, ...named } = await import(pathToFileURL(file).href);
-      const isObject = merged !== null && typeof merged === 'object';
-      if (merged !== undefined && !isObject) warn(`plugin ${name}: export default must be an object of hooks`);
-      const hooks = isObject ? { ...merged, ...named } : named;
-      for (const [wrong, right] of Object.entries(NEAR_MISSES)) if (wrong in hooks) warn(`plugin ${name}: exports ${wrong}; did you mean ${right}?`);
-      if (!HOOKS.some(hook => hook in hooks)) warn(`plugin ${name}: exports none of ${HOOKS.join(', ')}`);
-      if (hooks.order !== undefined && !Number.isFinite(hooks.order)) warn(`plugin ${name}: order must be a number`);
-      plugins.push({ ...hooks, name, file, dir, order: Number.isFinite(hooks.order) ? hooks.order : 0 });
+      const hooks = await import(pathToFileURL(file).href);
+      if (!HOOKS.some(hook => hook in hooks)) warn(`plugin ${name}: exports none of ${HOOKS.join(', ')}, by name`);
+      plugins.push({ ...hooks, name, file, dir, order: hooks.order ?? 0 });
     } catch (e) {
       warn(`plugin ${name}${locate(e, file)}: ${e.message}`);
     }
@@ -67,44 +62,26 @@ export function collect(plugins, warn) {
     table[key] = value;
   };
   for (const p of plugins) {
-    // an error from plugin code says whose it is
-    const named = (fn, where, self) => (...args) => {
+    // A failure says whose it is, and the fallback stands in; running out of stack isn't the plugin's doing.
+    const guard = (fn, where, self, fallback) => (...args) => {
       try { return fn.apply(self, args); }
-      catch (e) { throw new Error(`plugin ${p.name}, ${where}${locate(e, p.file)}: ${e?.message ?? e}`, { cause: e }); }
-    };
-    const entries = (hook, what) => {
-      const value = p[hook];
-      if (value === undefined) return [];
-      if (value === null || typeof value !== 'object' || Array.isArray(value)) { warn(`plugin ${p.name}: ${hook} must be an object of ${what}`); return []; }
-      return Object.entries(value);
-    };
-    const files = hook => {
-      if (p[hook] === undefined) return [];
-      if (Array.isArray(p[hook]) && p[hook].every(f => typeof f === 'string')) return p[hook].map(f => path.resolve(p.dir, f));
-      warn(`plugin ${p.name}: ${hook} must be a list of files`);
-      return [];
-    };
-    for (const [k, fn] of entries('spans', 'functions')) {
-      if (typeof fn === 'function') claim(spans, k, named(fn, `span ${k}`, p), p, 'span prefix');
-      else warn(`plugin ${p.name}: span ${k} must be a function`);
-    }
-    for (const [k, fn] of entries('fences', 'functions')) {
-      if (typeof fn === 'function') claim(fences, k, named(fn, `fence ${k}`, p), p, 'fence');
-      else warn(`plugin ${p.name}: fence ${k} must be a function`);
-    }
-    for (const [k, def] of entries('blocks', 'block kinds')) {
-      if (typeof def?.render !== 'function' || (def.lex !== undefined && typeof def.lex !== 'function')) {
-        warn(`plugin ${p.name}: block ${k} must be an object with a render function, as in ${k}: { render(t, api) { … } }`);
-        continue;
+      catch (e) {
+        if (e instanceof RangeError) throw e;
+        warn(`plugin ${p.name}, ${where}${locate(e, p.file)}: ${typeof fn === 'function' ? e?.message ?? e : 'not a function'}`);
+        return fallback?.(...args);
       }
-      const wrapped = { ...def, render: named(def.render, `block ${k}`, def) };
-      if (def.lex) wrapped.lex = named(def.lex, `block ${k}`, def);
-      claim(blocks, k, wrapped, p, 'block kind');
+    };
+    for (const [k, fn] of Object.entries(p.spans ?? {})) {
+      if (k.includes(':')) warn(`plugin ${p.name}: span prefix ${k} can't contain a colon`);
+      claim(spans, k, guard(fn, `span ${k}`, p), p, 'span prefix');
     }
-    if (typeof p.comments === 'function') comments.push(named(p.comments, 'comments', p));
-    else if (p.comments !== undefined) warn(`plugin ${p.name}: comments must be a function`);
-    browser.push(...files('browser'));
-    styles.push(...files('styles'));
+    for (const [k, fn] of Object.entries(p.fences ?? {})) claim(fences, k, guard(fn, `fence ${k}`, p), p, 'fence');
+    for (const [k, def] of Object.entries(p.blocks ?? {})) {
+      claim(blocks, k, { ...def, render: guard(def?.render, `block ${k}`, def, plain), lex: def?.lex && guard(def.lex, `block ${k}`, def, relex) }, p, 'block kind');
+    }
+    if (p.comments) comments.push(guard(p.comments, 'comments', p));
+    for (const f of p.browser ?? []) browser.push(path.resolve(p.dir, f));
+    for (const f of p.styles ?? []) styles.push(path.resolve(p.dir, f));
   }
   return { spans, fences, blocks, comments, browser, styles };
 }

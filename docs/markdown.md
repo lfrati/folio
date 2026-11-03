@@ -19,12 +19,12 @@ abstract: What the paper is about.
 | Key | Meaning |
 | --- | --- |
 | `title` | The title; math and other inline Markdown work |
-| `author` or `authors` | A name, or a list of names |
-| `abstract` | Markdown; use a `\|` block for several paragraphs |
+| `author` or `authors` | A name, or names separated by commas |
+| `abstract` | One line of Markdown; a longer abstract is a `::: abstract` block at the top of the text |
 | `date` | Shown under the title. Defaults to today; an empty `date:` hides it |
 | `lang` | The page's language, `en` by default |
 
-A value can be plain, quoted, a `[a, b]` or `- item` list, or a `|` or `>` block, and a plain value can continue on indented lines. Lines starting with `#` are comments; a `#` later in a line is part of the value. Unknown keys produce warnings.
+Each key takes one line, with a plain or quoted value. Lines starting with `#` are comments; a `#` later in a line is part of the value. Unknown keys and other YAML forms, such as lists and `|` blocks, produce warnings.
 
 The first two heading levels appear in the table of contents and are numbered. Add `{-}` to leave a heading unnumbered, `{#sec:id}` to give it an ID you can reference, or both as `{#sec:id -}`.
 
@@ -44,7 +44,7 @@ As in pandoc, a `$` opens only before a non-space, and closes only after a non-s
 
 Use `aligned`, `gathered`, or a starred environment for several lines. `equation`, `align`, `gather`, and `alignat` add KaTeX's own numbers, which Folio doesn't track, so they produce a warning.
 
-The `macros` option defines macros for all math in the document. A `\newcommand` in one formula also carries over to later ones, so change it with `\renewcommand`.
+A `\newcommand` in one formula carries over to later ones, so change it with `\renewcommand`.
 
 ## Statements and proofs
 
@@ -111,7 +111,7 @@ Write `A sentence.[^detail]` and define the note with `[^detail]: More detail.` 
 
 ## Citations
 
-Write `[@key]` to cite an entry in the configured `.bib` file, `[@key, p. 3]` for a page, and `[@a; @b]` for several. Hovering a citation previews the entry, and cited entries appear in a generated references section.
+Write `[@key]` to cite an entry in the configured `.bib` file, `[@key, p. 3]` for a page, and `[@a] [@b]` for several. Hovering a citation previews the entry, and cited entries appear in a generated references section.
 
 ```bibtex
 @article{example2026,
@@ -122,7 +122,7 @@ Write `[@key]` to cite an entry in the configured `.bib` file, `[@key, p. 3]` fo
 }
 ```
 
-Folio reads what BibTeX reads, as exported by tools like arXiv, Crossref, and Zotero: `{…}` and `"…"` values, `@string` macros, `#` joins, and TeX accents. A DOI, arXiv ID, or URL becomes a link. Warnings name entries that can't be read, duplicate keys, and cited entries missing a title, author, or year.
+Folio reads what tools like arXiv, Crossref, and Zotero export: `{…}` and `"…"` values, TeX accents, and Crossref's tags in titles. A DOI, arXiv ID, or URL becomes a link. Warnings name entries that can't be read, duplicate keys, and cited entries missing a title, author, or year. `@string` macros and `#` joins also warn, so write the value out; an entry written with parentheses, as in `@misc(…)`, isn't read, and citing it reports an unknown citation.
 
 ## AI-authored passages
 

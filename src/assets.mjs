@@ -21,15 +21,10 @@ export function katexCss(warn) {
   return css;
 }
 
-function readAsset(file, warn) {
-  try { return fs.readFileSync(file, 'utf8'); }
-  catch (error) { warn(`${file}: ${error.code === 'ENOENT' ? 'file not found' : error.message}`); return ''; }
-}
-
 /** Concatenate scripts for the page. A top-level `export` is stripped so that an ES
  *  module used by the build can also run inline in the browser. */
-export function bundleScripts(files, warn = () => {}) {
-  const script = files.map(f => readAsset(f, warn).replace(/^export ((?:async )?function |const |let |class )/gm, '$1')).join('\n;\n');
+export function bundleScripts(files, warn) {
+  const script = files.map(f => fs.readFileSync(f, 'utf8').replace(/^export ((?:async )?function |const |let |class )/gm, '$1')).join('\n;\n');
   try { new Script(script); }
   catch (error) {
     warn(`browser scripts: ${error.message}; use plain scripts without imports, default exports, or duplicate top-level names`);
@@ -37,8 +32,8 @@ export function bundleScripts(files, warn = () => {}) {
   return script.replace(/<(\/script|!--)/gi, '<\\$1'); // neither may end or confuse the <script> element
 }
 
-export function readAll(files, warn = () => {}) {
-  return files.map(f => readAsset(f, warn)).join('\n').replace(/<\/style/gi, '<\\/style');
+export function readAll(files) {
+  return files.map(f => fs.readFileSync(f, 'utf8')).join('\n').replace(/<\/style/gi, '<\\/style');
 }
 
 const IMAGE_TYPES = {

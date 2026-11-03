@@ -11,6 +11,7 @@ import path from 'node:path';
 import { createHash } from 'node:crypto';
 import { spawnSync } from 'node:child_process';
 import { fileURLToPath, pathToFileURL } from 'node:url';
+import { parseArgs } from 'node:util';
 import { createRenderer, esc } from './render.mjs';
 import { parseBib, renderBibliography } from './bib.mjs';
 import { frontMatter } from './frontmatter.mjs';
@@ -21,7 +22,7 @@ const ENGINE_DIR = path.dirname(fileURLToPath(import.meta.url));
 const ASSETS_DIR = fileURLToPath(new URL('../assets/', import.meta.url));
 const CLI_FILE = fileURLToPath(new URL('../bin/folio.mjs', import.meta.url));
 
-const DEFAULTS = { src: 'paper.md', out: 'paper.html', style: null, bib: 'refs.bib', plugins: 'plugins', kinds: {}, macros: {}, theme: true, navigation: true };
+const DEFAULTS = { src: 'paper.md', out: 'paper.html', style: null, bib: 'refs.bib', plugins: 'plugins', kinds: {}, theme: true, navigation: true };
 
 function configURL(value) {
   if (value instanceof URL) return value;
@@ -47,35 +48,21 @@ export async function loadConfig(configUrl) {
   const own = module.default;
   if (own === null || typeof own !== 'object') throw new Error(`${name}: expected export default { src: 'paper.md', … }`);
   const c = { ...DEFAULTS, ...own };
-  for (const key of ['src', 'out', 'style', 'bib', 'plugins']) {
-    if (c[key] && typeof c[key] !== 'string') throw new Error(`${name}: ${key} must be one path, as a string`);
-  }
-  if (!c.src || !c.out) throw new Error(`${name}: ${c.src ? 'out' : 'src'} must be a path`);
   const abs = f => (f ? path.resolve(dir, f) : f);
   return { ...c, configFile, dir, src: abs(c.src), out: abs(c.out), style: abs(c.style), bib: abs(c.bib), plugins: abs(c.plugins) };
 }
 
 /** `--flag` and `--key=value` from argv, as an object. */
-export function parseFlags(argv) {
-  const flags = {};
-  for (const a of argv) {
-    const m = /^--([\w-]+)(?:=(.*))?$/.exec(a);
-    if (m) flags[m[1]] = m[2] ?? true;
-  }
-  return flags;
-}
+export const parseFlags = argv => ({ ...parseArgs({ args: argv, strict: false }).values });
 
-/** The real path of a file that may not exist yet. */
-function realPath(file) {
-  try { return fs.realpathSync(file); } catch { /* not there yet */ }
-  try { return path.join(fs.realpathSync(path.dirname(file)), path.basename(file)); } catch { return path.resolve(file); }
-}
+// A file the page would overwrite exists, so its real path can always be read.
+const realPath = file => { try { return fs.realpathSync(file); } catch { return file; } };
 
 /** Build once and write the page to config.out. Returns { html, warnings, ms, dependencies, aiDrafts }. */
 export async function build(config, flags = {}) {
   const result = await render(config, flags);
   const out = realPath(config.out);
-  const input = [config.configFile, ...result.dependencies].filter(Boolean).find(file => realPath(file) === out);
+  const input = [config.configFile, ...result.dependencies].find(file => realPath(file) === out);
   if (input) throw new Error(`out would overwrite an input: ${input}. Point out at a new .html file.`);
   fs.mkdirSync(path.dirname(config.out), { recursive: true });
   fs.writeFileSync(config.out, result.html);
@@ -93,7 +80,7 @@ export async function render(config, flags = {}) {
   const ctx = { config, flags, warn, esc, plugins };
   const bib = config.bib && fs.existsSync(config.bib) ? parseBib(readText(config.bib), warn) : new Map();
   const images = imageResolver(config.src, warn);
-  const R = createRenderer({ warn, kinds: config.kinds, macros: config.macros, bib, ...hooks, ctx, resolveImage: images.resolve });
+  const R = createRenderer({ warn, kinds: config.kinds, bib, ...hooks, ctx, resolveImage: images.resolve });
 
   if (!fs.existsSync(config.src)) throw new Error(`source file not found: ${config.src}`);
   const { meta, lines, body, line } = frontMatter(readText(config.src), warn);
@@ -132,7 +119,7 @@ export async function render(config, flags = {}) {
 <title>${esc(title)}</title>
 <style>
 ${katexCss(warn)}
-${readAll(styles, warn)}
+${readAll(styles)}
 </style>
 </head>
 <body>
@@ -159,18 +146,11 @@ ${bundleScripts(scripts, warn)}
 
 /** Command line entry: build once, or `--watch` and rebuild on every change. */
 export async function run(configUrl, argv = []) {
-  for (const a of argv) {
-    if (/^--w[watch]{3,5}$/i.test(a) && a !== '--watch') console.error(`folio: did you mean --watch? ${a} is only passed to plugins.`);
-  }
   const config = await loadConfig(configUrl);
   if (argv.includes('--watch')) return watch(configURL(configUrl), config, argv);
   const { html, warnings, ms, dependencies, aiDrafts } = await build(config, parseFlags(argv));
   if (process.env.FOLIO_WATCH_REPORT_FD === '3') {
-    fs.writeFileSync(3, JSON.stringify({
-      out: config.out,
-      files: [config.configFile, ...dependencies],
-      directories: [config.dir, config.plugins, ...dependencies.map(file => path.dirname(file))].filter(Boolean),
-    }));
+    fs.writeFileSync(3, JSON.stringify({ out: config.out, directories: [config.dir, config.plugins, ...dependencies.map(file => path.dirname(file))] }));
   }
   const pending = aiDrafts ? `, ${aiDrafts} AI draft${aiDrafts === 1 ? '' : 's'} pending` : '';
   console.log(`[${new Date().toLocaleTimeString()}] wrote ${path.basename(config.out)} (${(html.length / 1024).toFixed(0)} KB, ${ms.toFixed(0)} ms${pending})`);
@@ -179,31 +159,25 @@ export async function run(configUrl, argv = []) {
 }
 
 function watch(configUrl, config, argv) {
-  // A fresh child loads config/plugins on every build. A private pipe reports the inputs and
-  // the directories containing them, including images outside the project.
+  // A fresh child loads config/plugins on every build. A private pipe reports the directories
+  // holding the inputs, including images outside the project.
   const args = argv.filter(a => a !== '--watch');
   const watchers = new Map();
   let timer = null, out = config.out;
-  let inputs = new Set();     // what the last build read
-  let before = new Map();     // what those files contained when it started
-  let started = 0, finished = 0;
-  const digest = file => {
-    try { return createHash('sha1').update(fs.readFileSync(file)).digest('base64'); } catch { return null; }
-  };
   // Any change beside the paper rebuilds, since a plugin may read files Folio can't know about.
-  // A build's own writes must not, or a plugin generating a file would rebuild forever. A file
-  // touched during the last build is taken to be its own unless it is an input that really changed.
-  const ownWrite = file => {
-    let mtime;
-    try { mtime = fs.statSync(file).mtimeMs; }
-    catch { return !inputs.has(file); } // gone already: an editor's temporary file
-    if (mtime < started - 1000 || mtime > finished + 50) return false;
-    return !inputs.has(file) || digest(file) === before.get(file);
+  // A write that changes nothing doesn't, or a plugin generating a file would rebuild forever.
+  const seen = new Map();     // file -> its content (or why it can't be read) when last looked at
+  const changed = file => {
+    let content;
+    try { content = createHash('sha1').update(fs.readFileSync(file)).digest('base64'); } catch (error) { content = error.code; }
+    if (seen.get(file) === content) return false;
+    seen.set(file, content);
+    return true;
   };
-  const trigger = (dir, file) => {
-    if (file) {
-      const changed = path.resolve(dir, String(file));
-      if (changed === out || ownWrite(changed)) return;
+  const trigger = (dir, name) => {
+    if (name) {
+      const file = path.resolve(dir, String(name));
+      if (file === out || !changed(file)) return;
     }
     clearTimeout(timer);
     timer = setTimeout(rebuild, 80);
@@ -222,18 +196,14 @@ function watch(configUrl, config, argv) {
     }
   };
   function rebuild() {
-    before = new Map([...inputs].map(file => [file, digest(file)]));
-    started = Date.now();
     const child = spawnSync(process.execPath, [CLI_FILE, fileURLToPath(configUrl), ...args], {
       stdio: ['ignore', 'inherit', 'inherit', 'pipe'],
       env: { ...process.env, FOLIO_WATCH_REPORT_FD: '3' },
     });
-    finished = Date.now();
     const report = child.output?.[3]?.toString();
     if (report) {
       const built = JSON.parse(report);
       out = built.out;
-      inputs = new Set(built.files);
       update(built.directories);
     }
   }

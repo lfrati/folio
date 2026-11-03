@@ -18,10 +18,11 @@
   color-scheme: light;
 }
 
-/* Inside a marked block --mark holds its colour, and everything with a colour of its own (links,
-   notes, captions, numbers) asks for --mark first: no part of a draft looks like accepted text. */
+/* A marked block redefines the colour tokens, so links, notes, captions and numbers follow, in plugin
+   styles too: no part of a draft looks like accepted text. */
 .ai { --mark: var(--ai); }
 .wip { --mark: var(--wip); }
+.ai, .wip { --accent: var(--mark); --muted: var(--mark); --fg: var(--mark); color: var(--mark); }
 
 html { background: var(--bg); color: var(--fg); }
 body {
@@ -63,7 +64,7 @@ h1 { font-size: 1.35em; margin: 2.2rem 0 .8rem; }
 h2 { font-size: 1.15em; margin: 1.8rem 0 .6rem; }
 h1 .secno, h2 .secno { margin-right: .6em; }
 p { margin: 0 0 .9em; text-align: justify; hyphens: auto; }
-a { color: var(--mark, var(--accent)); text-decoration: none; }
+a { color: var(--accent); text-decoration: none; }
 a:hover { text-decoration: underline; }
 em { font-style: italic; }
 img { max-width: 100%; height: auto; }
@@ -110,24 +111,24 @@ th { font-weight: normal; border-bottom: 1px solid var(--fg); }
 th:not([align]) { text-align: left; }
 figure.table { margin: 1.5em 0; }
 figure.table table { margin: 0 auto; }
-figure.table figcaption { margin-top: .6em; text-align: center; font-size: .95em; color: var(--mark, var(--muted)); }
-figure.table figcaption b { color: var(--mark, var(--fg)); }
+figure.table figcaption { margin-top: .6em; text-align: center; font-size: .95em; color: var(--muted); }
+figure.table figcaption b { color: var(--fg); }
 
 /* numbered display equations */
 .eq { display: flex; align-items: center; margin: .8em 0; }
 .eq .katex-display { flex: 1; margin: 0; }
-.eq .eqno { color: var(--mark, var(--muted)); }
+.eq .eqno { color: var(--muted); }
 
 /* numbered figures: ::: center / pair / ralign / lalign {#fig:x} — the block keeps
    its centring, "Fig. n" sits at the bottom right */
 figure.fig { display: flex; align-items: flex-end; margin: 1.2em 0; }
 figure.fig > .center, figure.fig > .pair, figure.fig > .ralign, figure.fig > .lalign { flex: 1; min-width: 0; margin: 0; }
 figure.fig img { display: block; }
-figure.fig .figno { color: var(--mark, var(--muted)); margin-left: 1em; }
+figure.fig .figno { color: var(--muted); margin-left: 1em; }
 /* …or, with a Caption: line, the caption below the block, set like a table's */
 figure.fig.captioned { display: block; }
-figure.fig.captioned figcaption { margin-top: .6em; text-align: center; font-size: .95em; color: var(--mark, var(--muted)); }
-figure.fig.captioned figcaption b { color: var(--mark, var(--fg)); }
+figure.fig.captioned figcaption { margin-top: .6em; text-align: center; font-size: .95em; color: var(--muted); }
+figure.fig.captioned figcaption b { color: var(--fg); }
 .katex-display { overflow-x: auto; overflow-y: hidden; }
 
 /* lists */
@@ -138,17 +139,17 @@ li { margin: .2em 0; }
 /* sidenotes: [^id] in the text, the note floated into the right margin beside
    its mark, always visible. Consecutive notes stack because each clears the
    previous right float. */
-.sn-ref { font-weight: bold; color: var(--mark, var(--accent)); }
+.sn-ref { font-weight: bold; color: var(--accent); }
 .sn-note {
   float: right; clear: right;
   box-sizing: border-box;
   width: var(--sn-width);
   margin: 0 calc(-1 * (var(--sn-width) + var(--sn-gap))) .8em 1em;
-  font-size: .85em; line-height: 1.4; font-style: normal; color: var(--mark, var(--muted));
+  font-size: .85em; line-height: 1.4; font-style: normal; color: var(--muted);
 }
-.sn-note .sn-num { font-weight: bold; margin-right: .35em; color: var(--mark, var(--accent)); }
+.sn-note .sn-num { font-weight: bold; margin-right: .35em; color: var(--accent); }
 .sn-note em { font-style: italic; } /* even inside a lemma, whose upright-em rule would otherwise win */
-.sn:hover .sn-ref, .sn:hover .sn-note { color: var(--mark, var(--accent)); }
+.sn:hover .sn-ref, .sn:hover .sn-note { color: var(--accent); }
 /* a note floats out of its block's margin rule, so it carries its own */
 .ai .sn-note, .wip .sn-note { border-left: 2px solid var(--mark); padding-left: .5em; }
 

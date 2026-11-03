@@ -31,11 +31,10 @@ Paths resolve relative to the config file, so the build works from another direc
 | `bib` | `refs.bib` | Bibliography; missing files are allowed |
 | `plugins` | `plugins` | Folder of plugin `.mjs` files; missing folders are allowed |
 | `kinds` | `{}` | Statement types beyond the [built-in ones](markdown.md#statements-and-proofs), or new names and styles for them |
-| `macros` | `{}` | KaTeX macros shared by all math, such as `{ '\\R': '\\mathbb{R}' }` |
 
 Additional options are available to plugins through `ctx.config`. CLI flags such as `--snippets` or `--mode=draft` reach plugins as `ctx.flags`.
 
-Other than `--watch`, flags are not checked, because they belong to your plugins. A near miss of `--watch` prints a reminder.
+Other than `--watch`, flags are not checked, because they belong to your plugins.
 
 ## JavaScript API
 
@@ -53,7 +52,7 @@ const preview = await render(config); // same result, without writing output
 
 For rendering Markdown fragments, import `createRenderer` from `@lfrati/folio/renderer`. Create one renderer per document, call `parse(text)`, and then `finish()` to collect final diagnostics.
 
-Watch mode rebuilds when any file changes in the folders it watches, because plugins can read files Folio doesn't know about. It ignores the output and what the build itself wrote, so a plugin that generates a file doesn't start a loop; one consequence is that saving a file that isn't an input while a build is running doesn't trigger another build.
+Watch mode rebuilds when a file's contents change in the folders it watches, because plugins can read files Folio doesn't know about. Writing the same contents again doesn't count, so a plugin that generates a file settles after one extra build; one that writes something different every time, such as a timestamp, keeps rebuilding.
 
 ## Development
 

@@ -23,17 +23,12 @@
   function marked(target, copy) {
     const block = target.closest('.ai, .wip');
     if (!block || block === target) return copy;
-    const kind = block.classList.contains('ai') ? 'ai' : 'wip';
-    const wrapper = document.createElement('div');
-    wrapper.className = kind;
-    if (kind === 'ai') {
-      const label = document.createElement('p');
-      label.className = 'ai-label';
-      label.textContent = 'AI draft';
-      wrapper.appendChild(label);
-    }
-    wrapper.appendChild(copy);
-    return wrapper;
+    const shell = block.cloneNode(false);
+    shell.removeAttribute('id');
+    const label = block.querySelector(':scope > .ai-label');
+    if (label) shell.append(label.cloneNode(true));
+    shell.append(copy);
+    return shell;
   }
   function show(link) {
     hide();

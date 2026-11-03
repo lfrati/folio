@@ -1,6 +1,6 @@
 # Plugins
 
-Each `.mjs` file in the configured plugin directory is loaded automatically. Plugins are ordered by `order` (default 0), then filename. Export the hooks below by name, or together as `export default { … }`; a file exporting none of them produces a warning, and helper exports alongside them are fine.
+Each `.mjs` file in the configured plugin directory is loaded automatically. Plugins are ordered by `order` (default 0), then filename. Export the hooks below by name; a file exporting none of them produces a warning, and helper exports alongside them are fine.
 
 | Export | Purpose |
 | --- | --- |
@@ -29,7 +29,7 @@ A handler that throws produces a warning naming the plugin and line, and the pag
 
 ## Block definitions
 
-A definition supplies `render(token, api)` and can supply `lex(body, token, api)`, a numbering `label`, an unnumbered `reference` label, or `figure: false`. By default, the block's body is parsed as Markdown.
+A definition supplies `render(token, api)` and can supply `lex(body, token, api)`, a numbering `label`, an unnumbered `reference` label, `figure: false`, or `caption: true` to move a `Caption:` line to `token.caption`. By default, the block's body is parsed as Markdown.
 
 ```js
 export const blocks = {
@@ -41,7 +41,7 @@ export const blocks = {
 
 While rendering, the API includes `parse`, `parseInline`, `div`, `head`, `qed`, `ctx`, `warn`, and `esc`. While lexing, it includes `block`, `inline`, `ctx`, `warn`, and `esc`. The full block interface is documented beside `theoremKind()` in `src/render.mjs`.
 
-Inside `::: ai` and `::: wip`, the CSS variable `--mark` holds the block's color. Use `color: var(--mark, …)` in plugin styles for anything with its own color, so that a draft stays visibly marked.
+Inside `::: ai` and `::: wip`, the theme's `--accent`, `--muted`, and `--fg` all become the block's color, so plugin styles that use them keep a draft visibly marked. A hard-coded color stays as written.
 
 ## Browser scripts
 
