@@ -9,10 +9,20 @@ Folio turns Markdown into a single HTML document with math, references, and inte
 - **Cross-references:** Hover over a lemma, proof, equation, table, or figure reference to preview its contents.
 - **Figures:** Images and plugin-generated diagrams with numbered captions and references; local image files are embedded in the HTML.
 - **Sidenotes:** Numbered notes alongside the text.
+- **AI drafts:** Explicitly labelled AI-authored passages, shown in red with a left margin marker.
 - **Citations:** BibTeX citations and an automatically generated references section.
 - **Plugins:** Custom inline markup, fenced code blocks, and document blocks, with optional JavaScript and CSS.
 - **Build feedback:** Watch mode rebuilds on edits, and warnings identify broken references, malformed blocks, and invalid math.
 
 The [showcase](examples/showcase/paper.md) shows Markdown source beside its rendered result for each feature. Run `npm ci && npm run build:demo` to generate `examples/showcase/index.html`, a single file ready to open or host.
 
-See [Getting started](docs/getting-started.md) for installation and usage, [Markdown syntax](docs/markdown.md) for authoring, and [Plugins](docs/plugins.md) for extensions.
+Start a minimal document with:
+
+```sh
+npx --yes --package=github:lfrati/folio#v0.3.0 folio init my-paper
+cd my-paper
+npm install
+npm run build
+```
+
+Agents should start with the [authoring guide](docs/agents.md), then use the [syntax](docs/markdown.md), [configuration/API](docs/getting-started.md), and [plugin](docs/plugins.md) references.

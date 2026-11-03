@@ -131,27 +131,27 @@ Plugins can add document blocks and browser behavior. This demo's square block e
 
 The bars, slider, and source/result panels are implemented in the demo's [example plugin](https://github.com/lfrati/folio/tree/main/examples/showcase/plugins). They illustrate the extension API and can be replaced with your own widgets.
 
+# AI drafts
+
+Agents wrap their proposed text in an AI block, which stays visibly marked until you accept it. The label, red text, and left marker identify the passage as an AI draft.
+
+::: example
+::: ai
+This paragraph was drafted by an AI agent.
+::: endai
+:::
+
 # Try it
 
-Install Folio and create `paper.md` plus `paper.config.mjs`:
+Create a minimal project with a Hello, world document and agent instructions:
 
 ```sh
-npm install github:lfrati/folio#v0.2.0
+npx --yes --package=github:lfrati/folio#v0.3.0 folio init my-paper
+cd my-paper
+npm install
+npm run build
 ```
 
-```js
-export default {
-  src: 'paper.md',
-  out: 'paper.html',
-  kinds: {
-    lemma: { name: 'Lemma', style: 'plain' },
-  },
-};
-```
-
-```sh
-npx folio
-npx folio --watch
-```
+Edit `paper.md` and open the generated `paper.html`. Use `npm run watch` to rebuild while writing; the generated `AGENTS.md` explains how agents should mark their drafts.
 
 Build this showcase with `npm run build:demo` in the [Folio repository](https://github.com/lfrati/folio). The resulting `examples/showcase/index.html` is a single file ready to open locally or serve as a website.

@@ -1,32 +1,19 @@
-# Getting started
+# Configuration and API reference
 
-Use Node.js 20 or newer. Install Folio from its Git repository:
+Agents should start with the [authoring guide](agents.md). Use Node.js 20 or newer.
 
-```sh
-npm install github:lfrati/folio#v0.2.0
-```
-
-Create `paper.md` and `paper.config.mjs` in your project:
-
-```js
-export default {
-  src: 'paper.md',
-  out: 'paper.html',
-  kinds: {
-    lemma: { name: 'Lemma', style: 'plain' },
-    definition: { name: 'Definition', style: 'defn' },
-  },
-};
-```
-
-Build once or rebuild on edits:
+## Initialize a project
 
 ```sh
-npx folio paper.config.mjs
-npx folio paper.config.mjs --watch
+npx --yes --package=github:lfrati/folio#v0.3.0 folio init my-paper
+cd my-paper
+npm install
+npm run build
 ```
 
-The config argument defaults to `paper.config.mjs`. Open the generated HTML directly in a browser.
+This creates a minimal config, a Hello, world document, build/watch scripts, and agent instructions. Open `paper.html`, edit `paper.md`, and use `npm run watch` for automatic rebuilds.
+
+If Folio is already available as a command, use `folio init my-paper` directly. The directory defaults to the current directory; existing target files are preserved.
 
 ## Configuration
 

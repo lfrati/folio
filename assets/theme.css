@@ -8,6 +8,7 @@
   --accent: #8a1c1c;
   --box: #f4f1ea;
   --error: #d62828;
+  --ai: #c0262c;
   --wip: #c0262c;      /* text still being proved or reviewed */
   --content-width: 57em;
   --toc-width: 16em;
@@ -63,6 +64,11 @@ em { font-style: italic; }
    Red text, and a thin red rule in the left margin so a long block stays marked on scroll. */
 div.wip { color: var(--wip); border-left: 2px solid var(--wip); margin-left: -1em; padding-left: calc(1em - 2px); }
 div.wip .thm-head, div.wip figcaption b { color: var(--wip); }
+
+/* AI-authored prose keeps an explicit label, red text, and a left margin marker. */
+div.ai { color: var(--ai); border-left: 3px solid var(--ai); margin: 1.2em 0; padding-left: 1em; }
+.ai-label { font-weight: bold; font-size: .85em; margin-bottom: .5em; }
+div.ai .thm-head, div.ai figcaption b { color: var(--ai); }
 
 /* theorem-like blocks */
 .thm { margin: 1.2em 0; }

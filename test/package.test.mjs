@@ -150,7 +150,7 @@ test('the packed package installs and builds in a separate project', t => {
   const dir = temporary(t);
   const packed = JSON.parse(command('npm', ['pack', '--json', '--ignore-scripts', '--pack-destination', dir], root))[0];
   const files = new Set(packed.files.map(file => file.path));
-  for (const file of ['src/index.mjs', 'assets/theme.css', 'assets/navigation.js', 'assets/navigation.css', 'bin/folio.mjs', 'examples/showcase/images/triangle.svg']) {
+  for (const file of ['src/index.mjs', 'assets/theme.css', 'assets/navigation.js', 'assets/navigation.css', 'bin/folio.mjs', 'src/init.mjs', 'docs/agents.md', 'examples/showcase/images/triangle.svg']) {
     assert.ok(files.has(file), `package is missing ${file}`);
   }
   assert.ok(!files.has('original-paper.html'));
@@ -163,14 +163,21 @@ test('the packed package installs and builds in a separate project', t => {
   command(process.execPath, ['--input-type=module', '-e', "import { loadConfig, render } from '@lfrati/folio'; const result = await render(await loadConfig('./paper.config.mjs')); if (result.warnings.length) throw Error(result.warnings.join('\\n'));"], dir);
   const html = fs.readFileSync(path.join(dir, 'dist/article.html'), 'utf8');
   assert.ok(html.includes('An unrelated project') && html.includes('.preview {'));
+  const starter = path.join(dir, 'fresh project');
+  command(path.join(dir, 'node_modules/.bin/folio'), ['init', starter], dir);
+  command('npm', ['install', '--no-save', '--package-lock=false', '--prefer-offline', '--ignore-scripts', '--no-audit', '--no-fund', path.join(dir, packed.filename)], starter);
+  command('npm', ['run', 'build'], starter);
+  const hello = fs.readFileSync(path.join(starter, 'paper.html'), 'utf8');
+  assert.ok(hello.includes('Hello, world! Start writing here.') && hello.includes('class="ai-label">AI draft</p>'));
+
 });
 
 test('the showcase presents every example from a single Markdown source', async () => {
   const config = await loadConfig(new URL('../examples/showcase/paper.config.mjs', import.meta.url));
   const { html, warnings } = await render(config);
   assert.deepEqual(warnings, []);
-  assert.equal((html.match(/class="example-source"/g) || []).length, 9);
-  assert.equal((html.match(/class="example-result"/g) || []).length, 9);
+  assert.equal((html.match(/class="example-source"/g) || []).length, 10);
+  assert.equal((html.match(/class="example-result"/g) || []).length, 10);
   assert.ok(html.includes('&lt;') || html.includes('::: lemma {#lem:square'));
   assert.ok(html.includes('id="lem:square"'));
   assert.ok(html.includes('class="square-demo"') && html.includes('value * value'));
@@ -240,4 +247,88 @@ test('remote and data images are retained, while missing local files cause a dia
   assert.match(result.warnings[0], /^image missing\.png:/);
   assert.ok(result.html.includes('src="https://example.com/image.png"'));
   assert.ok(result.html.includes(`src="${data}"`));
+});
+
+
+test('init creates a minimal project with a working config and agent-labelled Hello World', async t => {
+  const dir = temporary(t);
+  const destination = path.join(dir, 'nested', 'My Paper');
+  const output = command(process.execPath, [cli, 'init', destination], dir);
+  assert.match(output, /npm install/);
+  assert.match(output, /npm run build/);
+  assert.deepEqual(fs.readdirSync(destination).sort(), ['.gitignore', '.npmrc', 'AGENTS.md', 'package.json', 'paper.config.mjs', 'paper.md'].sort());
+  const manifest = JSON.parse(fs.readFileSync(path.join(destination, 'package.json'), 'utf8'));
+  const version = JSON.parse(fs.readFileSync(path.join(root, 'package.json'), 'utf8')).version;
+  assert.equal(manifest.name, 'my-paper');
+  assert.equal(manifest.dependencies['@lfrati/folio'], `github:lfrati/folio#v${version}`);
+  assert.equal(manifest.scripts.build, 'folio');
+  assert.equal(manifest.scripts.watch, 'folio --watch');
+  assert.match(fs.readFileSync(path.join(destination, 'AGENTS.md'), 'utf8'), /Preserve AI markers until the human explicitly accepts/);
+  const config = await loadConfig(path.join(destination, 'paper.config.mjs'));
+  const result = await build(config);
+  assert.deepEqual(result.warnings, []);
+  assert.ok(result.html.includes('Hello, world! Start writing here.'));
+  assert.ok(result.html.includes('<div class="ai">'));
+  assert.ok(result.html.includes('<p class="ai-label">AI draft</p>'));
+  assert.ok(!fs.existsSync(path.join(destination, 'node_modules')));
+});
+
+test('init works in the current directory and preserves unrelated files', t => {
+  const dir = temporary(t);
+  fs.writeFileSync(path.join(dir, 'notes.txt'), 'existing notes');
+  command(process.execPath, [cli, 'init'], dir);
+  assert.equal(fs.readFileSync(path.join(dir, 'notes.txt'), 'utf8'), 'existing notes');
+  assert.ok(fs.existsSync(path.join(dir, 'paper.config.mjs')));
+});
+
+test('init checks all conflicting files before creating any starter files', t => {
+  for (const name of ['paper.md', 'paper.config.mjs', 'AGENTS.md', 'package.json', '.npmrc', '.gitignore']) {
+    const dir = temporary(t);
+    fs.writeFileSync(path.join(dir, name), 'Keep this file exactly.');
+    const result = spawnSync(process.execPath, [cli, 'init', dir], { encoding: 'utf8', cwd: os.tmpdir() });
+    assert.equal(result.status, 1);
+    assert.match(result.stderr, /already contains/);
+    assert.equal(fs.readFileSync(path.join(dir, name), 'utf8'), 'Keep this file exactly.');
+    assert.deepEqual(fs.readdirSync(dir), [name]);
+  }
+  const dir = temporary(t);
+  fs.symlinkSync(path.join(dir, 'missing-target'), path.join(dir, 'paper.md'));
+  const result = spawnSync(process.execPath, [cli, 'init', dir], { encoding: 'utf8' });
+  assert.equal(result.status, 1);
+  assert.deepEqual(fs.readdirSync(dir), ['paper.md']);
+  assert.ok(fs.lstatSync(path.join(dir, 'paper.md')).isSymbolicLink());
+});
+
+test('init rejects unsupported arguments without creating a project', t => {
+  const dir = temporary(t);
+  const destination = path.join(dir, 'unused');
+  const result = spawnSync(process.execPath, [cli, 'init', destination, '--force'], { encoding: 'utf8' });
+  assert.equal(result.status, 1);
+  assert.match(result.stderr, /Usage: folio init/);
+  assert.ok(!fs.existsSync(destination));
+});
+
+test('AI drafts remain explicitly marked around nested Markdown constructs', () => {
+  const warnings = [];
+  const renderer = createRenderer({ warn: message => warnings.push(message), kinds: { lemma: { name: 'Lemma' } } });
+  const html = renderer.parse(`Human text before.
+
+::: ai
+A proposed **explanation** with $x^2$.
+
+::: lemma {#lem:draft}
+A proposed statement.
+:::
+::: endai
+
+Human text after. See @lem:draft.
+`);
+  renderer.finish();
+  assert.deepEqual(warnings, []);
+  assert.ok(html.startsWith('<p>Human text before.</p>'));
+  assert.ok(html.includes('<div class="ai">\n<p class="ai-label">AI draft</p>'));
+  assert.ok(html.includes('<strong>explanation</strong>'));
+  assert.ok(html.includes('class="lemma thm plain" id="lem:draft"'));
+  assert.ok(html.includes('</div>\n<p>Human text after.'));
+  assert.ok(html.includes('href="#lem:draft">Lemma 1</a>'));
 });

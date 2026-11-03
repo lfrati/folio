@@ -94,6 +94,18 @@ Write `[@key]` to cite an entry in the configured `.bib` file. Folio supports a 
 }
 ```
 
+## AI-authored passages
+
+Wrap AI-drafted prose in `::: ai` and close it with `::: endai`:
+
+```markdown
+::: ai
+A draft written by an AI agent.
+::: endai
+```
+
+It is labelled **AI draft**, colored red, and marked with a left border. Keep the wrapper until the human accepts the text; use `wip` separately for unfinished work.
+
 ## Other blocks
 
 `::: alpha` gives an ordered list lettered markers, and `::: wip` marks work in progress. Unregistered block names wrap their contents in a matching CSS class.

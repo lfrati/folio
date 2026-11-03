@@ -82,6 +82,12 @@ export function theoremKind({ name, style = 'plain' }) {
 }
 
 const builtinKinds = {
+  ai: {
+    figure: false,
+    render(t, api) {
+      return api.div(t, `<p class="ai-label">AI draft</p>\n${api.parse(t.tokens)}`);
+    },
+  },
   proof: {
     reference: 'Proof',
     figure: false,
