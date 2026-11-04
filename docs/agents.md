@@ -15,7 +15,7 @@ npm run build
 
 The starter uses Folio's built-in theme and needs no stylesheet, plugin directory, or build wrapper. Add those only when the document needs them.
 
-Commit the `package-lock.json` created by the first `npm install`, then use `npm ci` on other machines. Keep install scripts disabled and dependencies pinned; see the [dependency review](dependencies.md) before changing them.
+Commit the `package-lock.json` created by the first `npm install`, then use `npm ci` on other machines. Keep install scripts disabled and dependencies pinned; see the [dependency review](dependencies.md) before changing them. To move a project to a new Folio version, follow [Upgrade Folio](getting-started.md#upgrade-folio).
 
 ## Mark AI-written text
 

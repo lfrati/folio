@@ -18,7 +18,7 @@ Folio's own CLI, watch mode, initializer, and tests need no additional packages.
 
 ## What freezes the versions
 
-**Exact direct pins are what travel with Folio.** npm reads a dependency's `package.json` wherever the package comes from, so all three versions are pinned there. KaTeX asks for `commander` at `^8.3.0`, and a direct pin is what makes npm settle on 8.3.0 instead of the newest 8.x. Every package in the lockfile must be a direct exact pin, and a test enforces that, so a future dependency of a dependency can't drift unnoticed.
+**Exact direct pins are what travel with Folio.** npm reads a dependency's `package.json` wherever the package comes from, so all three versions are pinned there. KaTeX asks for `commander` at `^8.3.0`, and a direct pin is what makes npm settle on 8.3.0 instead of the newest 8.x. Every package in the lockfile must be a direct exact pin, so a future dependency of a dependency can't drift unnoticed.
 
 **A project's own lockfile is the real freeze.** The starter pins a Folio Git tag. Commit the project's generated `package-lock.json` to lock the Git commit and every version and integrity hash, and use `npm ci` on subsequent installs.
 

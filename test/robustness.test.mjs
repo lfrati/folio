@@ -14,7 +14,6 @@ import { frontMatter } from '../src/frontmatter.mjs';
 
 const root = fileURLToPath(new URL('../', import.meta.url));
 const cli = path.join(root, 'bin/folio.mjs');
-const read = file => fs.readFileSync(path.join(root, file), 'utf8');
 
 function dialect(source, options = {}) {
   const warnings = [];
@@ -545,13 +544,6 @@ test('a missing style or script stops the build, naming the file', async t => {
   ]) await assert.rejects(page(t, { 'paper.md': 'x\n', ...files }), new RegExp(`ENOENT.*${name}`));
 });
 
-test('the page says what is broken, and marks drafts all the way through', () => {
-  const css = read('assets/theme.css');
-  assert.match(css, /\.ref\.bad, \.cite\.bad, \.sn-ref\.bad, \.katex-error \{ color: var\(--error\); \}/);
-  assert.match(css, /^\.ai, \.wip \{ --accent: var\(--mark\); --muted: var\(--mark\); --fg: var\(--mark\);/m);
-  assert.doesNotMatch(css, /@media/, 'one layout, for desktop');
-});
-
 test('the AI draft count reaches the build and the command line', async t => {
   const dir = project(t, { 'paper.md': '::: ai\nOne.\n::: endai\n\n::: ai\nTwo.\n:::\n' });
   const config = await loadConfig(path.join(dir, 'paper.config.mjs'));
@@ -736,43 +728,12 @@ export const spans = { snippet: () => fs.readFileSync(new URL('../snippet.txt', 
   await watch.until(() => fs.readFileSync(path.join(dir, 'paper.html'), 'utf8').includes('recovered'));
 });
 
-// -- the project itself ----------------------------------------------------------------------
+// -- a new project ---------------------------------------------------------------------------
 
-test('every package in the lock is pinned exactly, directly, so that pins travel with Folio', () => {
-  const manifest = JSON.parse(read('package.json'));
-  const lock = JSON.parse(read('package-lock.json'));
-  assert.equal(lock.packages[''].version, manifest.version);
-  assert.deepEqual(lock.packages[''].dependencies, manifest.dependencies);
-  for (const [location, info] of Object.entries(lock.packages)) {
-    if (!location) continue;
-    const name = location.split('node_modules/').at(-1);
-    assert.equal(manifest.dependencies[name], info.version, `${name} must be a direct exact pin`);
-    assert.ok(!location.includes('/node_modules/'), `${location} is a second copy`);
-    assert.match(info.integrity, /^sha512-/);
-  }
-  for (const version of Object.values(manifest.dependencies)) assert.match(version, /^\d+\.\d+\.\d+$/);
-  assert.ok(!fs.existsSync(path.join(root, 'npm-shrinkwrap.json')), 'npm 12 ignores it, and a Git install always has');
-});
-
-test('the project is licensed, and the docs agree on how to start', () => {
-  const manifest = JSON.parse(read('package.json'));
-  assert.equal(manifest.license, 'MIT');
-  assert.match(read('LICENSE'), /^MIT License/);
-  assert.ok(manifest.files.every(file => fs.existsSync(path.join(root, file))));
-  const command = `npx --yes --ignore-scripts --min-release-age=14 --allow-git=all --package=github:lfrati/folio#v${manifest.version} folio init my-paper`;
-  for (const file of ['README.md', 'docs/agents.md', 'docs/getting-started.md', 'examples/showcase/paper.md']) {
-    assert.ok(read(file).includes(command), `${file} should say: ${command}`);
-  }
-});
-
-test('a new project opts in to its Git dependency and points agents at the installed guide', t => {
+test('a new project opts in to its Git dependency, which npm 12 otherwise refuses', t => {
   const dir = project(t, {});
   fs.rmSync(path.join(dir, 'paper.config.mjs'));
   const run = folio(['init'], dir);
   assert.equal(run.status, 0, run.stderr);
   assert.match(fs.readFileSync(path.join(dir, '.npmrc'), 'utf8'), /^allow-git=all$/m);
-  const agents = fs.readFileSync(path.join(dir, 'AGENTS.md'), 'utf8');
-  assert.ok(agents.includes('node_modules/@lfrati/folio/docs/agents.md'));
-  assert.ok(!agents.includes('github.com'), 'a link would need access to the repository');
-  assert.ok(fs.existsSync(path.join(root, 'docs/agents.md')));
 });

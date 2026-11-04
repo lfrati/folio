@@ -17,6 +17,16 @@ If Folio is already available as a command, use `folio init my-paper` directly. 
 
 The bootstrap command disables dependency install scripts, requires releases to be at least 14 days old, and allows the Git dependency on Folio, which npm 12 otherwise refuses. New projects record the same settings in `.npmrc`. Commit the generated `package-lock.json`, which is what freezes a project's dependencies, and use `npm ci` for subsequent installs. See [Dependencies](dependencies.md) for the versions and review.
 
+## Upgrade Folio
+
+Install the new tag by name, then commit the lockfile:
+
+```sh
+npm install 'github:lfrati/folio#vX.Y.Z'
+```
+
+Don't just edit the tag in `package.json`. Before npm 12, `npm install` and `npm ci` then keep the locked version without saying so.
+
 ## Configuration
 
 Paths resolve relative to the config file, so the build works from another directory.
